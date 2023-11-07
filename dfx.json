@@ -1,0 +1,26 @@
+{
+  "canisters": {
+    "wzrd_icp_backend": {
+      "candid": "src/wzrd_icp_backend/wzrd_icp_backend.did",
+      "package": "wzrd_icp_backend",
+      "type": "rust"
+    },
+    "wzrd_icp_frontend": {
+      "dependencies": [
+        "wzrd_icp_backend"
+      ],
+      "source": [
+        "src/wzrd_icp_frontend/assets"
+      ],
+      "type": "assets"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}

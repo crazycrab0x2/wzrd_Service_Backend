@@ -1,0 +1,4 @@
+[workspace]
+members = [
+    "src/wzrd_icp_backend",
+]
