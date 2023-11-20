@@ -12,3 +12,8 @@ crate-type = ["cdylib"]
 candid = "0.8"
 ic-cdk = "0.7"
 ic-cdk-timers = "0.1" # Feel free to remove this dependency if you don't need timers
+rand = "0.8.5"
+sha2 = "0.10"
+pbkdf2 = { version = "0.12", features = ["simple"] }
+rand_core = { version = "0.6", features = ["std"] }
+getrandom = { version = "0.2", features = ["js"] }

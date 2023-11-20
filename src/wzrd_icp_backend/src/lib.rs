@@ -1,9 +1,20 @@
 use ic_cdk::{
-    export::{candid::CandidType, Principal},
+    export:: {candid::CandidType, Principal},
     query, update,
 };
-use std::cell::RefCell;
+use std::{cell::RefCell};
+use ic_cdk::api::time;
 use std::collections::BTreeMap;
+use std::vec::Vec;
+use std::io::Write;
+
+// use crypto::aes::{ebc_decryptor, ebc_encryptor, KeySize};
+// use crypto::blockmodes::PkcsPadding;
+// use crypto::buffer::{BufferResult, ReadBuffer, WriteBuffer};
+// use crypto::digest::Digest;
+// use crypto::pbkdf2::pbkdf2;
+// use rand_core::{RngCore, OsRng};
+// use rand::Rng;
 
 type IdStore = BTreeMap<String, Principal>;
 type PhoneNumberStore = BTreeMap<String, Principal>;
@@ -70,6 +81,66 @@ fn has_email_address(email_address: &String) -> bool {
         let binding = email_address_store.borrow();
         binding.get(email_address).is_some()
     })
+}
+
+fn generate_random_number() -> u64 {
+    let current_time = time();
+    let pseudo_random_number = current_time % u64::MAX;
+
+    pseudo_random_number
+}
+
+fn make_challenge() -> String {
+    let challenge = generate_random_number();
+
+    challenge.to_string()
+}
+
+fn derive_key(password: &str, salt: &[u8]) -> Vec<u8> {
+    let mut key = vec![0; 32]; // 256 bits
+    
+    key
+}
+
+fn encrypt(data: &str, key: &[u8], iv: &[u8]) -> Vec<u8> {
+    // let mut encryptor = cbc_encryptor(KeySize::KeySize256, key, iv, PkcsPadding);
+    let mut buffer:Vec<u8>  = Vec::new();
+    buffer.write(data.as_bytes()).unwrap();
+    let mut final_result:Vec<u8>  = Vec::new();
+    // loop {
+    //     let mut read_buffer = [0; 4096];
+    //     let result = buffer.read(&mut read_buffer).unwrap();
+    //     // encryptor
+    //     //     .crypt(&read_buffer[..result], &mut final_result)
+    //     //     .unwrap();
+    //     if result == 0 {
+    //         break;
+    //     }
+    // }
+    final_result
+}
+
+fn decrypt(data: &[u8], key: &[u8]) -> String {
+
+    let min_length = data.len().min(key.len());
+
+    let result:Vec<u8> = data
+        .iter()
+        .zip(key.iter())
+        .map(|(&a, &b)| a^ b)
+        .collect();
+
+    let remaining1 = data[min_length..].to_vec();
+    let remaining2 = key[min_length..].to_vec();
+
+    let final_result = [&result[..], &remaining1[..], &remaining2[..]].concat();
+
+    String::from_utf8(final_result).unwrap()
+}
+
+#[query(name = "loginRequest")]
+pub fn login_request() -> String {
+    make_challenge()
 }
 
 #[query(name = "checkId")]
@@ -171,8 +242,46 @@ pub fn register(
 }
 
 #[update]
-fn authenticate(_id: String) -> bool {
-    return true;
+pub fn register_with_challenge(
+    challenge: String,
+    id: String,
+    first_name: Option<String>,
+    last_name: Option<String>,
+    phone_number: Option<String>,
+    email_address: Option<String>,
+) -> bool {
+    let _id = decrypt(id.as_bytes(), challenge.as_bytes());
+    let _first_name = if first_name.is_some() {
+        decrypt(first_name.unwrap_or(String::new()).as_bytes(), challenge.as_bytes())
+    } else {
+        String::new()
+    };
+        
+    let _last_name = if last_name.is_some() {
+        decrypt(last_name.unwrap_or(String::new()).as_bytes(), challenge.as_bytes())
+    } else {
+        String::new()
+    };
+
+    let _phone_number = if phone_number.is_some() {
+        decrypt(phone_number.unwrap_or(String::new()).as_bytes(), challenge.as_bytes())
+    } else {
+        String::new()
+    };
+
+    let _email_address = if email_address.is_some() {
+        decrypt(email_address.unwrap_or(String::new()).as_bytes(), challenge.as_bytes())
+    } else {
+        String::new()
+    };
+
+    register(_id, Some(_first_name), Some(_last_name), Some(_phone_number), Some(_email_address))
+}
+
+#[update]
+fn authenticate(challenge: String, _id: String) -> bool {
+    let id = decrypt(_id.as_bytes(), challenge.as_bytes());
+    has_id(&id)
 }
 
 #[cfg(test)]
