@@ -44,10 +44,11 @@ fn add_id(id: String, principal: Principal) -> Result<(), String> {
     Ok(())
 }
 
-fn has_id(id: &String) -> bool {
+fn has_id(id: &str) -> bool {
     ID_STORE.with(|id_store| {
-        let binding = id_store.borrow();
-        binding.get(id).is_some()
+        let store = id_store.borrow();
+        // binding.get(id).is_some()
+        store.contains_key(id)
     })
 }
 
@@ -148,8 +149,10 @@ pub fn check_id(id: String) -> bool {
     has_id(&id)
 }
 
-#[query(name = "getProfile")]
-pub fn get_profile(id: String) -> Profile {
+#[query]
+pub fn getprofile(id: String) -> Profile {
+
+    println!("{:#?}", id);
     ID_STORE.with(|id_store| {
         PROFILE_STORE.with(|profile_store| {
             id_store
@@ -214,18 +217,18 @@ fn create_profile(
     Ok(())
 }
 
-#[update]
+#[query]
 pub fn register(
     id: String,
     first_name: Option<String>,
     last_name: Option<String>,
     phone_number: Option<String>,
     email_address: Option<String>,
-) -> bool {
-    let res = check_id(id.clone());
-    if !res {
-        return false;
-    }
+) -> () {
+    // let res = check_id(id.clone());
+    // if !res {
+    //     return false;
+    // }
     let caller = ic_cdk::caller();
 
     create_profile(
@@ -238,7 +241,7 @@ pub fn register(
     )
     .unwrap();
 
-    true
+    // true
 }
 
 #[update]
