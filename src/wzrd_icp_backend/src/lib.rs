@@ -148,8 +148,10 @@ pub fn check_id(id: String) -> bool {
     has_id(&id)
 }
 
-#[query(name = "getProfile")]
-pub fn get_profile(id: String) -> Profile {
+#[query]
+pub fn getprofile(id: String) -> Profile {
+
+    println!("{:#?}", id);
     ID_STORE.with(|id_store| {
         PROFILE_STORE.with(|profile_store| {
             id_store
@@ -214,7 +216,7 @@ fn create_profile(
     Ok(())
 }
 
-#[update]
+#[query]
 pub fn register(
     id: String,
     first_name: Option<String>,
