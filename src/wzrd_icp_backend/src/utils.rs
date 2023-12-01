@@ -1,6 +1,5 @@
 use ic_cdk::{
-    export:: {candid::CandidType, Principal},
-    query, update,
+    export:: {candid::CandidType, Principal}
 };
 use std::{cell::RefCell};
 use std::collections::BTreeMap;
@@ -12,6 +11,7 @@ type EmailAddressStore = BTreeMap<String, Principal>;
 
 #[derive(Clone, Debug, Default, CandidType)]
 pub struct Profile {
+    pub id: String,
     pub phone_number: Option<String>,
     pub email_address: Option<String>,
     pub first_name: Option<String>,
@@ -25,11 +25,10 @@ thread_local! {
     pub static EMAIL_ADDRESS_STORE: RefCell<EmailAddressStore> = RefCell::default();
 }
 
-pub fn has_id(id: String) -> bool {
+pub fn has_id(id: &String) -> bool {
     ID_STORE.with(|id_store| {
         let store = id_store.borrow();
-        store.get(&id).is_some()
-        // store.contains_key(&id)
+        store.get(id).is_some()
     })
 }
 
@@ -82,11 +81,12 @@ pub fn create_profile(
     phone_number: Option<String>,
     email_address: Option<String>,
 ) -> Result<(), String> {
-    let _ = add_id(id, principal);
+    let _ = add_id(id.clone(), principal);
     let _ = add_phone_number(phone_number.clone(), principal);
     let _ = add_email_address(email_address.clone(), principal);
 
     let profile = Profile {
+        id,
         first_name,
         last_name,
         phone_number,
@@ -97,4 +97,16 @@ pub fn create_profile(
     });
 
     Ok(())
+}
+
+pub fn get_profile(id: String) -> Profile {
+    let none_profile = Profile{
+        id: "".to_string(),
+        first_name: None,
+        last_name: None,
+        phone_number: None,
+        email_address: None,
+    };
+    let principal = ID_STORE.with(|id_store| id_store.borrow().get(&id).unwrap().clone());
+    PROFILE_STORE.with(|profile_store| profile_store.borrow().get(&principal).unwrap_or(&none_profile).clone())
 }
