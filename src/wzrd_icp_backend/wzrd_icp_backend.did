@@ -10,8 +10,10 @@ service : {
     "getProfile": (text) -> (Profile) query;
     "getPrincipal": (text) -> (text) query;
     "checkId": (text) -> (bool) query;
+    "CreateGroup": (text, text, text, opt text) -> (text);
+    "JoinGroup": (text, text) -> (text);
+    "LeaveGroup": (text, text) -> (text);
     "reserveID": (text, text, text) -> (bool);
-    "Register": (text, opt text, opt text, opt text, opt text) -> (bool);
     "register_with_challenge": (text, text, opt text, opt text, opt text, opt text) -> (bool) query;
     "authenticate": (text, text) -> (bool) query;
 }

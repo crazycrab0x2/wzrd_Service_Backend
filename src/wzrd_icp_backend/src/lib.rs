@@ -2,8 +2,8 @@ use ic_cdk::{query, update};
 // use ic_cdk::api::time;
 // use std::vec::Vec;
 // use std::io::Write;
-mod utils;
-
+mod idUtils;
+mod chatUtils;
 // use crypto::aes::{ebc_decryptor, ebc_encryptor, KeySize};
 // use crypto::blockmodes::PkcsPadding;
 // use crypto::buffer::{BufferResult, ReadBuffer, WriteBuffer};
@@ -15,13 +15,13 @@ mod utils;
 
 #[query(name = "checkId")]
 pub fn check_id(id: String) -> bool {
-    utils::has_id(&id)
+    idUtils::has_id(&id)
 }
 
 #[query(name = "getPrincipal")]
 pub fn get_principal(id: String) -> String {
     // ic_cdk::caller().to_string()
-    utils::ID_STORE.with(|id_store| id_store.borrow().get(&id).unwrap().clone().to_string())
+    idUtils::ID_STORE.with(|id_store| id_store.borrow().get(&id).unwrap().clone().to_string())
 }
 
 #[update(name = "Register")]
@@ -32,18 +32,18 @@ pub fn register(
     phone_number: Option<String>,
     email_address: Option<String>,
 ) -> bool {
-    let res = utils::has_id(&id);
+    let res = idUtils::has_id(&id);
     if res {
         return false;
     }
 
     let caller = ic_cdk::caller();
 
-    let _ = utils::add_id(id.clone(), caller);
-    let _ = utils::add_phone_number(phone_number.clone(), caller);
-    let _ = utils::add_email_address(email_address.clone(), caller);
+    let _ = idUtils::add_id(id.clone(), caller);
+    let _ = idUtils::add_phone_number(phone_number.clone(), caller);
+    let _ = idUtils::add_email_address(email_address.clone(), caller);
 
-    utils::create_profile(
+    idUtils::create_profile(
         id.clone(),
         caller,
         first_name,
@@ -57,21 +57,21 @@ pub fn register(
 
 #[update(name = "reserveID")]
 pub fn reserve_id(id: String, phone_number: String, email_address: String) -> bool {
-    if utils::has_id(&id) {
+    if idUtils::has_id(&id) {
         return false;
     }
 
-    if utils::has_phone_number(&phone_number) {
+    if idUtils::has_phone_number(&phone_number) {
         return false;
     }
 
-    if utils::has_email_address(&email_address) {
+    if idUtils::has_email_address(&email_address) {
         return false;
     }
 
     let caller = ic_cdk::caller();
 
-    utils::create_profile(
+    idUtils::create_profile(
         id,
         caller,
         None,
@@ -84,11 +84,24 @@ pub fn reserve_id(id: String, phone_number: String, email_address: String) -> bo
 }
 
 #[query(name = "getProfile")]
-pub fn get_profile(id: String) -> utils::Profile {
-    utils::get_profile(id)
+pub fn get_profile(id: String) -> idUtils::Profile {
+    idUtils::get_profile(id)
 }
 
+#[update(name = "CreateGroup")]
+pub fn create_group(id: String, group_id: String, group_name: String, group_description: Option<String>) -> String {
+    chatUtils::create_group(id, group_id, group_name, group_description)
+}
 
+#[update(name = "JoinGroup")]
+pub fn join_group(id: String, group_id: String) -> String {
+    chatUtils::join_group(id, group_id)
+}
+
+#[update(name = "LeaveGroup")]
+pub fn leave_group(id: String, group_id: String) -> String {
+    chatUtils::leave_group(id, group_id)
+}
 
 // fn generate_random_number() -> u64 {
 //     let current_time = time();
