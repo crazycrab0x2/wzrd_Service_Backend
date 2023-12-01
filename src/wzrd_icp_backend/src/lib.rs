@@ -1,7 +1,7 @@
 use ic_cdk::{query, update};
-use ic_cdk::api::time;
-use std::vec::Vec;
-use std::io::Write;
+// use ic_cdk::api::time;
+// use std::vec::Vec;
+// use std::io::Write;
 mod utils;
 
 // use crypto::aes::{ebc_decryptor, ebc_encryptor, KeySize};
@@ -15,15 +15,16 @@ mod utils;
 
 #[query(name = "checkId")]
 pub fn check_id(id: String) -> bool {
-    utils::has_id(id)
+    utils::has_id(&id)
 }
 
 #[query(name = "getPrincipal")]
 pub fn get_principal(id: String) -> String {
-    ic_cdk::caller().to_string()
+    // ic_cdk::caller().to_string()
+    utils::ID_STORE.with(|id_store| id_store.borrow().get(&id).unwrap().clone().to_string())
 }
 
-#[update]
+#[update(name = "Register")]
 pub fn register(
     id: String,
     first_name: Option<String>,
@@ -31,7 +32,7 @@ pub fn register(
     phone_number: Option<String>,
     email_address: Option<String>,
 ) -> bool {
-    let res = utils::has_id(id.clone());
+    let res = utils::has_id(&id);
     if res {
         return false;
     }
@@ -54,33 +55,37 @@ pub fn register(
     true
 }
 
+#[update(name = "reserveID")]
+pub fn reserve_id(id: String, phone_number: String, email_address: String) -> bool {
+    if utils::has_id(&id) {
+        return false;
+    }
+
+    if utils::has_phone_number(&phone_number) {
+        return false;
+    }
+
+    if utils::has_email_address(&email_address) {
+        return false;
+    }
+
+    let caller = ic_cdk::caller();
+
+    utils::create_profile(
+        id,
+        caller,
+        None,
+        None,
+        Some(phone_number),
+        Some(email_address),
+    )
+    .unwrap();
+    return true;
+}
+
 #[query(name = "getProfile")]
 pub fn get_profile(id: String) -> utils::Profile {
-    // ID_STORE.with(|id_store| id_store.borrow().get(&id))
-    //         .and_then(|principal| PROFILE_STORE.with(|profile_store| profile_store.borrow().get(principal)))
-    //         .unwrap().clone()
-    // let principal = ID_STORE.with(|id_store| id_store.borrow().get(&id)); 
-    // match principal {
-    //     Some(principal) => PROFILE_STORE.with(|profile_store| profile_store.borrow().get(&principal)).unwrap_or_default().clone(),
-    //     None => {
-    //         let none_profile = Profile {
-    //             first_name: Some("".to_string()),
-    //             last_name: Some("".to_string()),
-    //             phone_number: Some("".to_string()),
-    //             email_address: Some("".to_string()),
-    //         };
-    //         &none_profile
-    //     }
-    // }
-    utils::ID_STORE.with(|id_store| {
-        utils::PROFILE_STORE.with(|profile_store| {
-            id_store
-                .borrow()
-                .get(&id)
-                .and_then(|principal| profile_store.borrow().get(principal).cloned())
-                .unwrap_or_default()
-        })
-    })
+    utils::get_profile(id)
 }
 
 
@@ -150,34 +155,6 @@ pub fn get_profile(id: String) -> utils::Profile {
 
 
 
-
-// #[update(name = "reserveID")]
-// pub fn reserve_id(id: String, phone_number: String, email_address: String) -> bool {
-//     if util::has_id(id.clone()) {
-//         return false;
-//     }
-
-//     if has_phone_number(&phone_number) {
-//         return false;
-//     }
-
-//     if has_email_address(&email_address) {
-//         return false;
-//     }
-
-//     let caller = ic_cdk::caller();
-
-//     create_profile(
-//         id,
-//         caller,
-//         None,
-//         None,
-//         Some(phone_number),
-//         Some(email_address),
-//     )
-//     .unwrap();
-//     return true;
-// }
 
 
 
