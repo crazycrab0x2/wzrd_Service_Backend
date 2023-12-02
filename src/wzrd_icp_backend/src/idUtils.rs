@@ -8,6 +8,7 @@ type IdStore = BTreeMap<String, Principal>;
 type ProfileStore = BTreeMap<Principal, Profile>;
 type PhoneNumberStore = BTreeMap<String, Principal>;
 type EmailAddressStore = BTreeMap<String, Principal>;
+type PasskeyStore = BTreeMap<String, String>;
 
 #[derive(Clone, Debug, Default, CandidType)]
 pub struct Profile {
@@ -21,8 +22,22 @@ pub struct Profile {
 thread_local! {
     pub static PROFILE_STORE: RefCell<ProfileStore> = RefCell::default();
     pub static ID_STORE: RefCell<IdStore> = RefCell::default();
+    pub static PASSKEY_STORE: RefCell<PasskeyStore> = RefCell::default();
     pub static PHONE_NUMBER_STORE: RefCell<PhoneNumberStore> = RefCell::default();
     pub static EMAIL_ADDRESS_STORE: RefCell<EmailAddressStore> = RefCell::default();
+}
+
+pub fn set_passkey(id: String, passkey: String) -> bool{
+    PASSKEY_STORE.with(|passkey_store| {
+        *passkey_store.borrow_mut().entry(id).or_insert("None".to_string()) = passkey;
+    });
+    true
+}
+
+pub fn get_passkey(id: String) -> String {
+    PASSKEY_STORE.with(|passkey_store| {
+        passkey_store.borrow().get(&id).unwrap_or(&"None".to_string()).clone()
+    })
 }
 
 pub fn has_id(id: &String) -> bool {
@@ -109,4 +124,15 @@ pub fn get_profile(id: String) -> Profile {
     };
     let principal = ID_STORE.with(|id_store| id_store.borrow().get(&id).unwrap().clone());
     PROFILE_STORE.with(|profile_store| profile_store.borrow().get(&principal).unwrap_or(&none_profile).clone())
+}
+
+pub fn login(id: String, passkey: String) -> bool {
+    PASSKEY_STORE.with(|passkey_store| {
+        if let Some(value) = passkey_store.borrow().get(&id) {
+            if *value == passkey{
+                return true;
+            }
+        }
+        return false;
+    })
 }

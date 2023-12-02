@@ -27,10 +27,12 @@ pub struct Group {
 
 type MessageStore = Vec<Message>;
 type GroupStore = Vec<Group>;
+type UserGroupStore = BTreeMap<String, Vec<String>>;
 
 thread_local! {
     pub static MESSAGE_STORE: RefCell<MessageStore> = RefCell::default();
     pub static GROUP_STORE: RefCell<GroupStore> = RefCell::default();
+    pub static USER_GROUP_STORE: RefCell<UserGroupStore> = RefCell::default();
 }
 
 pub fn create_group(id: String, group_id: String, group_name: String, group_description: Option<String>) -> String {
@@ -40,13 +42,22 @@ pub fn create_group(id: String, group_id: String, group_name: String, group_desc
     }
     GROUP_STORE.with(|group_store| {
         let new_group = Group{
-            group_id,
+            group_id: group_id.clone(),
             group_name,
             group_description,
             group_members: vec![id],
         };
         group_store.borrow_mut().push(new_group);
     });
+    // USER_GROUP_STORE.with(|user_group_store| {
+    //     let ug_store = user_group_store.borrow_mut();
+    //     if ug_store.get_mut(&id).is_some(){
+    //         ug_store.get_mut(&id).unwrap().push(group_id);
+    //     }
+    //     else{
+    //         ug_store.insert(id, vec![group_id]);
+    //     }
+    // });
     "Success!".to_string()
 }
 
@@ -79,11 +90,17 @@ pub fn leave_group(id: String, group_id: String) -> String {
             //     group_description: group.clone().group_description,
             //     group_members: new_members,
             // };
-            new_members.retain(|member| *member == id);
+            new_members.retain(|member| *member != id);
             group.group_members = new_members;
         }
     });
     "Success!".to_string()
+}                                      
+
+pub fn get_group_members(group_id: String) -> Vec<String> {
+    GROUP_STORE.with(|group_store| {
+        group_store.borrow().iter().find(|&group| *group.group_id == group_id).unwrap().clone().group_members
+    })
 }
 
 // pub fn get_group_list(id: String) -> Vec<Group> {
@@ -95,8 +112,6 @@ pub fn leave_group(id: String, group_id: String) -> String {
 pub fn get_friend_list() -> bool {true}
 
 pub fn get_group_messages() -> bool {true}
-
-pub fn get_group_members() -> bool {true}
 
 pub fn get_friend_messages() -> bool {true}
 

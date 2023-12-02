@@ -3,17 +3,18 @@ type Profile = record {
     "phone_number": opt text;
     "email_address": opt text;
     "first_name": opt text;
-    "last_name": opt text
+    "last_name": opt text;
 }
-
 service : {
-    "getProfile": (text) -> (Profile) query;
-    "getPrincipal": (text) -> (text) query;
+    "Register": (text, opt text, opt text, opt text, opt text) -> (bool);
     "checkId": (text) -> (bool) query;
+    "getProfile": (text) -> (Profile) query;
+    "SetPasskey": (text, text) -> (bool);
+    "GetPasskey": (text) -> (text) query;
+    "Login": (text, text) -> (bool) query;
+    "reserveID": (text, text, text) -> (bool);
     "CreateGroup": (text, text, text, opt text) -> (text);
     "JoinGroup": (text, text) -> (text);
     "LeaveGroup": (text, text) -> (text);
-    "reserveID": (text, text, text) -> (bool);
-    "register_with_challenge": (text, text, opt text, opt text, opt text, opt text) -> (bool) query;
-    "authenticate": (text, text) -> (bool) query;
+    "GetGroupMembers": (text) -> (vec text) query;
 }

@@ -12,6 +12,15 @@ mod chatUtils;
 // use rand_core::{RngCore, OsRng};
 // use rand::Rng;
 
+#[update(name = "SetPasskey")]
+pub fn set_passkey(id: String, passkey: String) -> bool{
+    idUtils::set_passkey(id, passkey)
+}
+
+#[query(name = "GetPasskey")]
+pub fn get_passkey(id: String) -> String {
+    idUtils::get_passkey(id)
+}
 
 #[query(name = "checkId")]
 pub fn check_id(id: String) -> bool {
@@ -22,6 +31,13 @@ pub fn check_id(id: String) -> bool {
 pub fn get_principal(id: String) -> String {
     // ic_cdk::caller().to_string()
     idUtils::ID_STORE.with(|id_store| id_store.borrow().get(&id).unwrap().clone().to_string())
+}
+
+#[query(name="Login")]
+fn login(id: String, passkey: String) -> bool {
+    // let id = decrypt(_id.as_bytes(), challenge.as_bytes());
+    // util::has_id(id)
+    idUtils::login(id, passkey)
 }
 
 #[update(name = "Register")]
@@ -102,6 +118,13 @@ pub fn join_group(id: String, group_id: String) -> String {
 pub fn leave_group(id: String, group_id: String) -> String {
     chatUtils::leave_group(id, group_id)
 }
+
+#[query(name = "GetGroupMembers")]
+pub fn get_group_members(group_id: String) -> Vec<String> {
+    chatUtils::get_group_members(group_id)
+}
+
+
 
 // fn generate_random_number() -> u64 {
 //     let current_time = time();
@@ -208,11 +231,7 @@ pub fn leave_group(id: String, group_id: String) -> String {
 //     register(_id, Some(_first_name), Some(_last_name), Some(_phone_number), Some(_email_address))
 // }
 
-// #[update]
-// fn authenticate(challenge: String, _id: String) -> bool {
-//     let id = decrypt(_id.as_bytes(), challenge.as_bytes());
-//     util::has_id(id)
-// }
+
 
 // #[cfg(test)]
 // mod tests {
