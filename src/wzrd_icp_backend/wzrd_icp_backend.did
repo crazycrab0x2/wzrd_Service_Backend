@@ -17,4 +17,5 @@ service : {
     "JoinGroup": (text, text) -> (text);
     "LeaveGroup": (text, text) -> (text);
     "GetGroupMembers": (text) -> (vec text) query;
+    "GetJoinedGroup": (text) -> (vec text) query;
 }
