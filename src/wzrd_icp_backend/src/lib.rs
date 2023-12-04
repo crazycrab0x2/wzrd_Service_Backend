@@ -137,9 +137,11 @@ pub fn get_group_messages(group_id: String) -> Vec<chat_utils::Message> {
 }
 
 #[update(name = "SendGroupMessage")]
-pub fn send_group_message(id: String, group_id: String, receiver_id: Option<String>, reply_id: Option<String>) -> String {
-    chat_utils::send_group_message(id, group_id, receiver_id, reply_id)
+pub fn send_group_message(id: String, group_id: String, receiver_id: Option<String>, reply_id: Option<String>, content: String) -> String {
+    chat_utils::send_group_message(id, group_id, receiver_id, reply_id, content)
 }
+
+
 // fn generate_random_number() -> u64 {
 //     let current_time = time();
 //     let pseudo_random_number = current_time % u64::MAX;
