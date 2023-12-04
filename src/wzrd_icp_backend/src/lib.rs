@@ -132,7 +132,7 @@ pub fn get_group_list(id: String) -> Vec<String> {
 }
 
 #[query(name = "GetGoupMessage")]
-pub fn get_group_messages(group_id: String) -> Vec<chat_utils::Message> {
+pub fn get_group_messages(group_id: String) -> Vec<chat_utils::GroupMessage> {
     chat_utils::get_group_messages(group_id)
 }
 
