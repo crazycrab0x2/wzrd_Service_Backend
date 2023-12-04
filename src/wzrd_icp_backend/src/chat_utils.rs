@@ -3,17 +3,25 @@ use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::id_utils;
-use chrono::prelude::*;
 
 #[derive(Clone, Debug, Default, CandidType)]
-pub struct Message {
+pub struct GroupMessage {
     pub id: usize,
     pub sender_id: String,
-    pub receiver_id: Option<String>,
+    pub reply_id: Option<String>,
+    pub content: String,
+    pub timestamp: String
+}
+
+#[derive(Clone, Debug, Default, CandidType)]
+pub struct DirectMessage {
+    pub id: usize,
+    pub sender_id: String,
+    pub receiver_id: String,
     pub reply_id: Option<String>,
     pub content: String,
     pub timestamp: String,
-    pub viewed: bool,
+    pub viewed: bool
 }
 
 #[derive(Clone, Debug, Default, CandidType)]
@@ -24,15 +32,15 @@ pub struct Group {
     pub group_members: Vec<String>,
 }
 
-type GroupMessageStore = BTreeMap<String, Vec<Message>>;
-type FriendMessageStore = Vec<Message>;
+type GroupMessageStore = BTreeMap<String, Vec<GroupMessage>>;
+type DirectMessageStore = Vec<DirectMessage>;
 type GroupStore = Vec<Group>;
 type UserGroupStore = BTreeMap<String, Vec<String>>;
 type UserFriendStore = BTreeMap<String, Vec<String>>;
 
 thread_local! {
     pub static GROUP_MESSAGE_STORE: RefCell<GroupMessageStore> = RefCell::default();
-    pub static FRIEND_MESSAGE_STORE: RefCell<FriendMessageStore> = RefCell::default();
+    pub static DIRECT_MESSAGE_STORE: RefCell<DirectMessageStore> = RefCell::default();
     pub static GROUP_STORE: RefCell<GroupStore> = RefCell::default();
     pub static USER_GROUP_STORE: RefCell<UserGroupStore> = RefCell::default();
     pub static USER_FRIEND_STORE: RefCell<UserFriendStore> = RefCell::default();
@@ -86,6 +94,7 @@ pub fn join_group(
     if !res {
         return "Invalid Group ID".to_string();
     }
+    //""""
     GROUP_STORE.with(|group_store| {
         if let Some(group) = group_store.borrow_mut().iter_mut().find(|group| *group.group_id == group_id){
             let mut new_members = group.group_members.clone();
@@ -158,7 +167,7 @@ pub fn get_group_list(
 
 pub fn get_group_messages(
     group_id: String
-) -> Vec<Message> {
+) -> Vec<GroupMessage> {
     let res = has_group_id(group_id.clone());
     if !res {
         vec![]
@@ -174,19 +183,12 @@ pub fn get_group_messages(
 pub fn send_group_message(
     id: String, 
     group_id: String, 
-    receiver_id: Option<String>, 
     reply_id: Option<String>,
     content: String
 ) -> String {
     let mut res = id_utils::has_id(&id);
     if !res {
         return "Invalid User ID".to_string();
-    }
-    if receiver_id.is_some(){
-        res = id_utils::has_id(&receiver_id.clone().unwrap());
-        if !res {
-            return "Invalid Receiver ID".to_string();
-        }
     }
     res = has_group_id(group_id.clone());
     if !res {
@@ -203,14 +205,12 @@ pub fn send_group_message(
             new_message_list = group_message_store.borrow().get(&group_id).unwrap().clone();
             message_id = new_message_list.len();
         }
-        let message = Message { 
+        let message = GroupMessage { 
             id: message_id, 
             sender_id: id, 
-            receiver_id, 
             reply_id,
             content, 
-            timestamp: Utc::now().to_string(), 
-            viewed: false 
+            timestamp: "SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()".to_string()
         };
         new_message_list.push(message);
         group_message_store.borrow_mut().insert(group_id, new_message_list);
@@ -218,50 +218,74 @@ pub fn send_group_message(
     "Success!".to_string()
 }
 
-pub fn send_friend_message(
-    id: String, 
+pub fn send_direct_message(
+    sender_id: String, 
     receiver_id: String, 
     reply_id: Option<String>,
     content: String
 ) -> String {
-    let mut res = id_utils::has_id(&id);
+    let mut res = id_utils::has_id(&sender_id);
     if !res {
         return "Invalid User ID".to_string();
     }
-    res = id_utils::has_id(&receiver_id.clone());
+    res = id_utils::has_id(&receiver_id);
     if !res {
         return "Invalid Receiver ID".to_string();
     }
-    FRIEND_MESSAGE_STORE.with(|friend_message_store| {
-        let message = Message { 
-            id: friend_message_store.borrow().clone().len(), 
-            sender_id: id.clone(), 
-            receiver_id: Some(receiver_id.clone()), 
+    DIRECT_MESSAGE_STORE.with(|direct_message_store| {
+        let message = DirectMessage { 
+            id: direct_message_store.borrow().clone().len(), 
+            sender_id: sender_id.clone(), 
+            receiver_id: receiver_id.clone(), 
             reply_id,
             content, 
-            timestamp: Utc::now().to_string(), 
+            timestamp: "SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()".to_string(), 
             viewed: false 
         };
-        friend_message_store.borrow_mut().push(message);
+        direct_message_store.borrow_mut().push(message);
     });
     USER_FRIEND_STORE.with(|user_friend_store| {
-        let mut new_friend_list;
-        if user_friend_store.borrow().get(&id).is_none() {
-            new_friend_list = vec![];
+        let mut sender_friend_list;
+        let mut receiver_friend_list;
+        if user_friend_store.borrow().get(&sender_id).is_none() {
+            sender_friend_list = vec![];
         } else {
-            new_friend_list = user_friend_store.borrow().get(&id).unwrap().clone();
+            sender_friend_list = user_friend_store.borrow().get(&sender_id).unwrap().clone();
         }
-        new_friend_list.push(receiver_id);
-        user_friend_store.borrow_mut().insert(id, new_friend_list);
+        sender_friend_list.push(receiver_id.clone());
+        user_friend_store.borrow_mut().insert(sender_id.clone(), sender_friend_list);
+
+        if user_friend_store.borrow().get(&receiver_id).is_none() {
+            receiver_friend_list = vec![];
+        } else {
+            receiver_friend_list = user_friend_store.borrow().get(&receiver_id).unwrap().clone();
+        }
+        receiver_friend_list.push(sender_id);
+        user_friend_store.borrow_mut().insert(receiver_id, receiver_friend_list);
     });
     "Success!".to_string()
 }
 
+pub fn get_friend_list(id: String) -> Vec<String> {
+    USER_FRIEND_STORE.with(|user_friend_store| {
+        user_friend_store.borrow().get(&id).unwrap_or(&vec![]).clone()
+    })
+}
+
 pub fn view_message() -> bool {true}
 
-pub fn get_friend_messages() -> bool {true}
+pub fn get_friend_messages(sender_id:String, receiver_id: String) -> Vec<DirectMessage> {
+    // DIRECT_MESSAGE_STORE.with(|direct_message_store| {
+    //     let dms = direct_message_store.borrow();
+    //      direct_message_store.borrow().iter().filter(|message| 
+    //        *message.sender_id == sender_id && 
+    //         *message.receiver_id == receiver_id || 
+    //         *message.sender_id == receiver_id && 
+    //         *message.receiver_id == sender_id).collet()
+    // })
+    vec![]
+}
 
-pub fn get_friend_list() -> bool {true}
 
 pub fn has_group_id(id: String) -> bool {
     GROUP_STORE.with(|group_store| {
