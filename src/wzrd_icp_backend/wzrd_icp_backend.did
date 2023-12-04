@@ -8,7 +8,6 @@ type Profile = record {
 type GroupMessage = record {
     "id": nat64;
     "sender_id": text;
-    "receiver_id": opt text;
     "reply_id": opt text;
     "content": text;
     "timestamp": text;
@@ -27,5 +26,7 @@ service : {
     "GetGroupMembers": (text) -> (vec text) query;
     "GetJoinedGroup": (text) -> (vec text) query;
     "GetGoupMessage": (text)-> (vec GroupMessage) query;
-    "SendGroupMessage": (text, text, opt text, opt text, text) -> (text);
+    "SendGroupMessage": (text, text, opt text, text) -> (text);
+    "SendDirectMessage": (text, text, opt text, text) -> (text);
+    "GetConnectedMembers": (text) -> (vec text) query;
 }

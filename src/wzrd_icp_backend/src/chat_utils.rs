@@ -8,7 +8,6 @@ use crate::id_utils;
 pub struct GroupMessage {
     pub id: usize,
     pub sender_id: String,
-    pub receiver_id: Option<String>,
     pub reply_id: Option<String>,
     pub content: String,
     pub timestamp: String
@@ -184,19 +183,12 @@ pub fn get_group_messages(
 pub fn send_group_message(
     id: String, 
     group_id: String, 
-    receiver_id: Option<String>, 
     reply_id: Option<String>,
     content: String
 ) -> String {
     let mut res = id_utils::has_id(&id);
     if !res {
         return "Invalid User ID".to_string();
-    }
-    if receiver_id.is_some(){
-        res = id_utils::has_id(&receiver_id.clone().unwrap());
-        if !res {
-            return "Invalid Receiver ID".to_string();
-        }
     }
     res = has_group_id(group_id.clone());
     if !res {
@@ -216,7 +208,6 @@ pub fn send_group_message(
         let message = GroupMessage { 
             id: message_id, 
             sender_id: id, 
-            receiver_id, 
             reply_id,
             content, 
             timestamp: "SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()".to_string()
@@ -228,23 +219,23 @@ pub fn send_group_message(
 }
 
 pub fn send_direct_message(
-    id: String, 
+    sender_id: String, 
     receiver_id: String, 
     reply_id: Option<String>,
     content: String
 ) -> String {
-    let mut res = id_utils::has_id(&id);
+    let mut res = id_utils::has_id(&sender_id);
     if !res {
         return "Invalid User ID".to_string();
     }
-    res = id_utils::has_id(&receiver_id.clone());
+    res = id_utils::has_id(&receiver_id);
     if !res {
         return "Invalid Receiver ID".to_string();
     }
     DIRECT_MESSAGE_STORE.with(|direct_message_store| {
         let message = DirectMessage { 
             id: direct_message_store.borrow().clone().len(), 
-            sender_id: id.clone(), 
+            sender_id: sender_id.clone(), 
             receiver_id: receiver_id.clone(), 
             reply_id,
             content, 
@@ -254,23 +245,47 @@ pub fn send_direct_message(
         direct_message_store.borrow_mut().push(message);
     });
     USER_FRIEND_STORE.with(|user_friend_store| {
-        let mut new_friend_list;
-        if user_friend_store.borrow().get(&id).is_none() {
-            new_friend_list = vec![];
+        let mut sender_friend_list;
+        let mut receiver_friend_list;
+        if user_friend_store.borrow().get(&sender_id).is_none() {
+            sender_friend_list = vec![];
         } else {
-            new_friend_list = user_friend_store.borrow().get(&id).unwrap().clone();
+            sender_friend_list = user_friend_store.borrow().get(&sender_id).unwrap().clone();
         }
-        new_friend_list.push(receiver_id);
-        user_friend_store.borrow_mut().insert(id, new_friend_list);
+        sender_friend_list.push(receiver_id.clone());
+        user_friend_store.borrow_mut().insert(sender_id.clone(), sender_friend_list);
+
+        if user_friend_store.borrow().get(&receiver_id).is_none() {
+            receiver_friend_list = vec![];
+        } else {
+            receiver_friend_list = user_friend_store.borrow().get(&receiver_id).unwrap().clone();
+        }
+        receiver_friend_list.push(sender_id);
+        user_friend_store.borrow_mut().insert(receiver_id, receiver_friend_list);
     });
     "Success!".to_string()
 }
 
+pub fn get_friend_list(id: String) -> Vec<String> {
+    USER_FRIEND_STORE.with(|user_friend_store| {
+        user_friend_store.borrow().get(&id).unwrap_or(&vec![]).clone()
+    })
+}
+
 pub fn view_message() -> bool {true}
 
-pub fn get_friend_messages() -> bool {true}
+pub fn get_friend_messages(sender_id:String, receiver_id: String) -> Vec<DirectMessage> {
+    // DIRECT_MESSAGE_STORE.with(|direct_message_store| {
+    //     let dms = direct_message_store.borrow();
+    //      direct_message_store.borrow().iter().filter(|message| 
+    //        *message.sender_id == sender_id && 
+    //         *message.receiver_id == receiver_id || 
+    //         *message.sender_id == receiver_id && 
+    //         *message.receiver_id == sender_id).collet()
+    // })
+    vec![]
+}
 
-pub fn get_friend_list() -> bool {true}
 
 pub fn has_group_id(id: String) -> bool {
     GROUP_STORE.with(|group_store| {

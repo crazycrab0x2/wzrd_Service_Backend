@@ -137,8 +137,18 @@ pub fn get_group_messages(group_id: String) -> Vec<chat_utils::GroupMessage> {
 }
 
 #[update(name = "SendGroupMessage")]
-pub fn send_group_message(id: String, group_id: String, receiver_id: Option<String>, reply_id: Option<String>, content: String) -> String {
-    chat_utils::send_group_message(id, group_id, receiver_id, reply_id, content)
+pub fn send_group_message(id: String, group_id: String, reply_id: Option<String>, content: String) -> String {
+    chat_utils::send_group_message(id, group_id, reply_id, content)
+}
+
+#[update(name = "SendDirectMessage")]
+pub fn send_direct_message(id: String, receiver_id: String, reply_id: Option<String>, content: String) -> String {
+    chat_utils::send_direct_message(id, receiver_id, reply_id, content)
+}
+
+#[query(name = "GetConnectedMembers")]
+pub fn get_friend_list(id:String) -> Vec<String> {
+    chat_utils::get_friend_list(id)
 }
 
 
