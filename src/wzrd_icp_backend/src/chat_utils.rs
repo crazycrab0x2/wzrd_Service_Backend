@@ -98,7 +98,9 @@ pub fn join_group(
     GROUP_STORE.with(|group_store| {
         if let Some(group) = group_store.borrow_mut().iter_mut().find(|group| *group.group_id == group_id){
             let mut new_members = group.group_members.clone();
-            new_members.push(id.clone());
+            if new_members.iter().find(|&member| *member == id).is_some(){
+                new_members.push(id.clone());
+            }
             group.group_members = new_members;
         }
     });
@@ -109,7 +111,9 @@ pub fn join_group(
         } else {
             new_group_list = user_group_store.borrow().get(&id).unwrap().clone();
         }
-        new_group_list.push(group_id);
+        if !new_group_list.iter().find(|&group| *group == group_id).is_some(){
+            new_group_list.push(group_id);
+        }
         user_group_store.borrow_mut().insert(id, new_group_list);
     });
     "Success!".to_string()
@@ -226,7 +230,7 @@ pub fn send_direct_message(
 ) -> String {
     let mut res = id_utils::has_id(&sender_id);
     if !res {
-        return "Invalid User ID".to_string();
+        return "Invalid Sender ID".to_string();
     }
     res = id_utils::has_id(&receiver_id);
     if !res {
@@ -252,7 +256,9 @@ pub fn send_direct_message(
         } else {
             sender_friend_list = user_friend_store.borrow().get(&sender_id).unwrap().clone();
         }
-        sender_friend_list.push(receiver_id.clone());
+        if !sender_friend_list.iter().find(|&id| *id == receiver_id).is_some(){
+            sender_friend_list.push(receiver_id.clone());
+        }
         user_friend_store.borrow_mut().insert(sender_id.clone(), sender_friend_list);
 
         if user_friend_store.borrow().get(&receiver_id).is_none() {
@@ -260,7 +266,9 @@ pub fn send_direct_message(
         } else {
             receiver_friend_list = user_friend_store.borrow().get(&receiver_id).unwrap().clone();
         }
-        receiver_friend_list.push(sender_id);
+        if !receiver_friend_list.iter().find(|&id| *id == sender_id).is_some(){
+            receiver_friend_list.push(sender_id);
+        }
         user_friend_store.borrow_mut().insert(receiver_id, receiver_friend_list);
     });
     "Success!".to_string()
@@ -272,19 +280,34 @@ pub fn get_friend_list(id: String) -> Vec<String> {
     })
 }
 
-pub fn view_message() -> bool {true}
-
 pub fn get_friend_messages(sender_id:String, receiver_id: String) -> Vec<DirectMessage> {
-    // DIRECT_MESSAGE_STORE.with(|direct_message_store| {
-    //     let dms = direct_message_store.borrow();
-    //      direct_message_store.borrow().iter().filter(|message| 
-    //        *message.sender_id == sender_id && 
-    //         *message.receiver_id == receiver_id || 
-    //         *message.sender_id == receiver_id && 
-    //         *message.receiver_id == sender_id).collet()
-    // })
-    vec![]
+    if !id_utils::has_id(&receiver_id) || !id_utils::has_id(&sender_id) {
+        return vec![];
+    }
+    // user friend store...
+    DIRECT_MESSAGE_STORE.with(|direct_message_store| {
+        let dms = direct_message_store.borrow().clone();
+        dms.iter().filter(|&message| 
+            message.sender_id == sender_id && 
+            message.receiver_id == receiver_id || 
+            message.sender_id == receiver_id && 
+            message.receiver_id == sender_id)
+        .map(|msg|{
+            let tmp = msg.clone();
+            DirectMessage { 
+                id: tmp.id, 
+                sender_id: tmp.sender_id, 
+                receiver_id: tmp.receiver_id, 
+                reply_id: tmp.reply_id, 
+                content: tmp.content, 
+                timestamp: tmp.timestamp, 
+                viewed: tmp.viewed
+            }
+        }).collect()
+    })
 }
+
+pub fn view_message() -> bool {true}
 
 
 pub fn has_group_id(id: String) -> bool {

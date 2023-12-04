@@ -12,6 +12,15 @@ type GroupMessage = record {
     "content": text;
     "timestamp": text;
 };
+type DirectMessage = record {
+    "id": nat64;
+    "sender_id": text;
+    "receiver_id": text;
+    "reply_id": opt text;
+    "content": text;
+    "timestamp": text;
+    "viewed": bool;
+}
 service : {
     "Register": (text, opt text, opt text, opt text, opt text) -> (bool);
     "checkId": (text) -> (bool) query;
@@ -29,4 +38,5 @@ service : {
     "SendGroupMessage": (text, text, opt text, text) -> (text);
     "SendDirectMessage": (text, text, opt text, text) -> (text);
     "GetConnectedMembers": (text) -> (vec text) query;
+    "GetDirectMessages": (text, text) -> (vec DirectMessage) query;
 }

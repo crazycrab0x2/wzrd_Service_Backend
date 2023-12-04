@@ -151,6 +151,10 @@ pub fn get_friend_list(id:String) -> Vec<String> {
     chat_utils::get_friend_list(id)
 }
 
+#[query(name = "GetDirectMessages")]
+pub fn get_friend_messages(sender_id: String, receiver_id: String) -> Vec<chat_utils::DirectMessage> {
+    chat_utils::get_friend_messages(sender_id, receiver_id)
+}
 
 // fn generate_random_number() -> u64 {
 //     let current_time = time();
