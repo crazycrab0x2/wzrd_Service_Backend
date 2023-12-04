@@ -1,7 +1,5 @@
-use ic_cdk::{
-    export:: {candid::CandidType, Principal}
-};
-use std::{cell::RefCell};
+use ic_cdk::export::candid::CandidType;
+use std::cell::RefCell;
 use std::collections::BTreeMap;
 
 use crate::idUtils;
@@ -28,86 +26,117 @@ pub struct Group {
 type MessageStore = Vec<Message>;
 type GroupStore = Vec<Group>;
 type UserGroupStore = BTreeMap<String, Vec<String>>;
+type UserFriendStore = BTreeMap<String, Vec<String>>;
 
 thread_local! {
     pub static MESSAGE_STORE: RefCell<MessageStore> = RefCell::default();
     pub static GROUP_STORE: RefCell<GroupStore> = RefCell::default();
     pub static USER_GROUP_STORE: RefCell<UserGroupStore> = RefCell::default();
+    pub static USER_FRIEND_STORE: RefCell<UserFriendStore> = RefCell::default();
 }
 
 pub fn create_group(id: String, group_id: String, group_name: String, group_description: Option<String>) -> String {
-    let res = idUtils::has_id(&id);
-    if res {
+    let mut res = idUtils::has_id(&id);
+    if !res {
         return "Invalid User ID".to_string();
+    }
+    res = has_group_id(group_id.clone());
+    if !res {
+        return "Invalid Group ID".to_string();
     }
     GROUP_STORE.with(|group_store| {
         let new_group = Group{
             group_id: group_id.clone(),
             group_name,
             group_description,
-            group_members: vec![id],
+            group_members: vec![id.clone()],
         };
         group_store.borrow_mut().push(new_group);
     });
-    // USER_GROUP_STORE.with(|user_group_store| {
-    //     let ug_store = user_group_store.borrow_mut();
-    //     if ug_store.get_mut(&id).is_some(){
-    //         ug_store.get_mut(&id).unwrap().push(group_id);
-    //     }
-    //     else{
-    //         ug_store.insert(id, vec![group_id]);
-    //     }
-    // });
+    USER_GROUP_STORE.with(|user_group_store| {
+        let mut new_group_list;
+        if user_group_store.borrow().get(&id).is_none() {
+            new_group_list = vec![];
+        } else {
+            new_group_list = user_group_store.borrow().get(&id).unwrap().clone();
+        }
+        new_group_list.push(group_id);
+        user_group_store.borrow_mut().insert(id, new_group_list);
+    });
     "Success!".to_string()
 }
 
 pub fn join_group(id: String, group_id: String) -> String {
-    let res = idUtils::has_id(&id);
-    if res {
+    let mut res = idUtils::has_id(&id);
+    if !res {
         return "Invalid User ID".to_string();
+    }
+    res = has_group_id(group_id.clone());
+    if !res {
+        return "Invalid Group ID".to_string();
     }
     GROUP_STORE.with(|group_store| {
         if let Some(group) = group_store.borrow_mut().iter_mut().find(|group| *group.group_id == group_id){
             let mut new_members = group.group_members.clone();
-            new_members.push(id);
+            new_members.push(id.clone());
             group.group_members = new_members;
         }
+    });
+    USER_GROUP_STORE.with(|user_group_store| {
+        let mut new_group_list;
+        if user_group_store.borrow().get(&id).is_none() {
+            new_group_list = vec![];
+        } else {
+            new_group_list = user_group_store.borrow().get(&id).unwrap().clone();
+        }
+        new_group_list.push(group_id);
+        user_group_store.borrow_mut().insert(id, new_group_list);
     });
     "Success!".to_string()
 }
 
 pub fn leave_group(id: String, group_id: String) -> String {
-    let res = idUtils::has_id(&id);
-    if res {
+    let mut res = idUtils::has_id(&id);
+    if !res {
         return "Invalid User ID".to_string();
+    }
+    res = has_group_id(group_id.clone());
+    if !res {
+        return "Invalid Group ID".to_string();
     }
     GROUP_STORE.with(|group_store| {
         if let Some(group) = group_store.borrow_mut().iter_mut().find(|group| *group.group_id == group_id){
             let mut new_members = group.group_members.clone();
-            // *group = Group{
-            //     group_id: group.clone().group_id,
-            //     group_name: group.clone().group_name,
-            //     group_description: group.clone().group_description,
-            //     group_members: new_members,
-            // };
             new_members.retain(|member| *member != id);
             group.group_members = new_members;
+        }
+    });
+    USER_GROUP_STORE.with(|user_group_store| {
+        let mut new_group_list;
+        if !user_group_store.borrow().get(&id).is_none() {
+            new_group_list = user_group_store.borrow().get(&id).unwrap().clone();
+            new_group_list.retain(|groupid| *groupid != group_id);
+            user_group_store.borrow_mut().insert(id, new_group_list);
         }
     });
     "Success!".to_string()
 }                                      
 
 pub fn get_group_members(group_id: String) -> Vec<String> {
+    let res = has_group_id(group_id.clone());
+    if !res {
+        return vec![];
+    }
     GROUP_STORE.with(|group_store| {
         group_store.borrow().iter().find(|&group| *group.group_id == group_id).unwrap().clone().group_members
     })
 }
 
-// pub fn get_group_list(id: String) -> Vec<Group> {
-//     // GROUP_STORE.with(|group_store| {
-//     //     group_store.borrow().iter().filter(|&group| group.group_id == )
-//     // })
-// }
+pub fn get_group_list(id: String) -> Vec<String> {
+    USER_GROUP_STORE.with(|user_group_store| {
+        user_group_store.borrow().get(&id).unwrap_or(&vec![]).clone()
+    })
+}
 
 pub fn get_friend_list() -> bool {true}
 
@@ -122,12 +151,11 @@ pub fn send_friend_message() -> bool {true}
 pub fn view_message() -> bool {true}
 
 
-// pub fn has_id(id: &String) -> bool {
-//     idUtils::ID_STORE.with(|id_store| {
-//         let store = id_store.borrow();
-//         store.get(id).is_some()
-//     })
-// }
+pub fn has_group_id(id: String) -> bool {
+    GROUP_STORE.with(|group_store| {
+        group_store.borrow().iter().find(|group| *group.group_id == id).is_some()
+    })
+}
 
 // pub fn has_phone_number(phone_number: &String) -> bool {
 //     PHONE_NUMBER_STORE.with(|phone_number_store| {

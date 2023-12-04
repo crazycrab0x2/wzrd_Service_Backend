@@ -1,7 +1,5 @@
-use ic_cdk::{
-    export:: {candid::CandidType, Principal}
-};
-use std::{cell::RefCell};
+use ic_cdk::export:: {candid::CandidType, Principal};
+use std::cell::RefCell;
 use std::collections::BTreeMap;
 
 type IdStore = BTreeMap<String, Principal>;

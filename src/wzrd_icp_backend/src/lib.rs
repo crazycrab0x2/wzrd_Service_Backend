@@ -124,6 +124,10 @@ pub fn get_group_members(group_id: String) -> Vec<String> {
     chatUtils::get_group_members(group_id)
 }
 
+#[query(name = "GetJoinedGroup")]
+pub fn get_group_list(id: String) -> Vec<String> {
+    chatUtils::get_group_list(id)
+}
 
 
 // fn generate_random_number() -> u64 {
