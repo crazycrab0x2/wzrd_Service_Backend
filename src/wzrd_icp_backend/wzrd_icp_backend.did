@@ -4,7 +4,16 @@ type Profile = record {
     "email_address": opt text;
     "first_name": opt text;
     "last_name": opt text;
-}
+};
+type Message = record {
+    "id": nat;
+    "sender_id": text;
+    "receiver_id": opt text;
+    "reply_id": opt text;
+    "content": text;
+    "timestamp": text;
+    "viewed": bool;
+};
 service : {
     "Register": (text, opt text, opt text, opt text, opt text) -> (bool);
     "checkId": (text) -> (bool) query;
@@ -18,4 +27,6 @@ service : {
     "LeaveGroup": (text, text) -> (text);
     "GetGroupMembers": (text) -> (vec text) query;
     "GetJoinedGroup": (text) -> (vec text) query;
+    "GetGoupMessage": (text)-> (vec Message) query;
+    "SendGroupMessage": (text, text, opt text, opt text, text) -> (text);
 }

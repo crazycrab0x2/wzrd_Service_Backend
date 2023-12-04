@@ -25,27 +25,36 @@ thread_local! {
     pub static EMAIL_ADDRESS_STORE: RefCell<EmailAddressStore> = RefCell::default();
 }
 
-pub fn set_passkey(id: String, passkey: String) -> bool{
+pub fn set_passkey(
+    id: String, 
+    passkey: String
+) -> bool{
     PASSKEY_STORE.with(|passkey_store| {
         *passkey_store.borrow_mut().entry(id).or_insert("None".to_string()) = passkey;
     });
     true
 }
 
-pub fn get_passkey(id: String) -> String {
+pub fn get_passkey(
+    id: String
+) -> String {
     PASSKEY_STORE.with(|passkey_store| {
         passkey_store.borrow().get(&id).unwrap_or(&"None".to_string()).clone()
     })
 }
 
-pub fn has_id(id: &String) -> bool {
+pub fn has_id(
+    id: &String
+) -> bool {
     ID_STORE.with(|id_store| {
         let store = id_store.borrow();
         store.get(id).is_some()
     })
 }
 
-pub fn has_phone_number(phone_number: &String) -> bool {
+pub fn has_phone_number(
+    phone_number: &String
+) -> bool {
     PHONE_NUMBER_STORE.with(|phone_number_store| {
         let binding = phone_number_store.borrow();
         binding.get(phone_number).is_some()
@@ -53,14 +62,19 @@ pub fn has_phone_number(phone_number: &String) -> bool {
 }
 
 
-pub fn has_email_address(email_address: &String) -> bool {
+pub fn has_email_address(
+    email_address: &String
+) -> bool {
     EMAIL_ADDRESS_STORE.with(|email_address_store| {
         let binding = email_address_store.borrow();
         binding.get(email_address).is_some()
     })
 }
 
-pub fn add_id(id: String, principal: Principal) -> Result<(), String> {
+pub fn add_id(
+    id: String, 
+    principal: Principal
+) -> Result<(), String> {
     ID_STORE.with(|id_store| {
         id_store.borrow_mut().insert(id.clone(), principal);
     });
@@ -68,7 +82,10 @@ pub fn add_id(id: String, principal: Principal) -> Result<(), String> {
     Ok(())
 }
 
-pub fn add_phone_number(phone_number: Option<String>, principal: Principal) -> Result<(), String> {
+pub fn add_phone_number(
+    phone_number: Option<String>, 
+    principal: Principal
+) -> Result<(), String> {
     if phone_number.is_some() {
         PHONE_NUMBER_STORE.with(|store| {
             store.borrow_mut().insert(phone_number.unwrap(), principal);
@@ -77,7 +94,10 @@ pub fn add_phone_number(phone_number: Option<String>, principal: Principal) -> R
     return Ok(());
 }
 
-pub fn add_email_address(email_address: Option<String>, principal: Principal) -> Result<(), String> {
+pub fn add_email_address(
+    email_address: Option<String>, 
+    principal: Principal
+) -> Result<(), String> {
     if email_address.is_some() {
         EMAIL_ADDRESS_STORE.with(|store| {
             store.borrow_mut().insert(email_address.unwrap(), principal);
@@ -112,7 +132,9 @@ pub fn create_profile(
     Ok(())
 }
 
-pub fn get_profile(id: String) -> Profile {
+pub fn get_profile(
+    id: String
+) -> Profile {
     let none_profile = Profile{
         id: "".to_string(),
         first_name: None,
@@ -124,7 +146,10 @@ pub fn get_profile(id: String) -> Profile {
     PROFILE_STORE.with(|profile_store| profile_store.borrow().get(&principal).unwrap_or(&none_profile).clone())
 }
 
-pub fn login(id: String, passkey: String) -> bool {
+pub fn login(
+    id: String, 
+    passkey: String
+) -> bool {
     PASSKEY_STORE.with(|passkey_store| {
         if let Some(value) = passkey_store.borrow().get(&id) {
             if *value == passkey{
