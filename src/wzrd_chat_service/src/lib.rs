@@ -31,9 +31,9 @@ pub fn get_group_members(group_id: String) -> Vec<String> {
     chat_utils::get_group_members(group_id)
 }
 
-#[query(name = "GetJoinedGroup")]
-pub fn get_group_list(id: String) -> Vec<String> {
-    chat_utils::get_group_list(id)
+#[update(name = "GetJoinedGroup")]
+pub async fn get_group_list(id: String) -> Vec<String> {
+    chat_utils::get_group_list(id).await
 }
 
 #[query(name = "GetGoupMessage")]
@@ -51,12 +51,12 @@ pub async fn send_direct_message(id: String, receiver_id: String, reply_id: Opti
     chat_utils::send_direct_message(id, receiver_id, reply_id, content).await
 }
 
-#[query(name = "GetConnectedMembers")]
-pub fn get_friend_list(id:String) -> Vec<String> {
-    chat_utils::get_friend_list(id)
+#[update(name = "GetConnectedMembers")]
+pub async fn get_friend_list(id:String) -> Vec<String> {
+    chat_utils::get_friend_list(id).await
 }
 
-#[query(name = "GetDirectMessages")]
+#[update(name = "GetDirectMessages")]
 pub async fn get_friend_messages(sender_id: String, receiver_id: String) -> Vec<chat_utils::DirectMessage> {
     chat_utils::get_friend_messages(sender_id, receiver_id).await
 }

@@ -183,12 +183,24 @@ pub fn get_group_members(
     })
 }
 
-pub fn get_group_list(
+pub async fn get_group_list(
     id: String
 ) -> Vec<String> {
-    USER_GROUP_STORE.with(|user_group_store| {
-        user_group_store.borrow().get(&id).unwrap_or(&vec![]).clone()
-    })
+    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "checkId", (id.clone(),)).await;
+    match user_validation {
+        Err(_err) => {
+            return vec![];
+        }
+        Ok(result) => {
+            let (id_valid,): (bool,) = result;
+            if !id_valid {
+                return vec![];
+            }
+            USER_GROUP_STORE.with(|user_group_store| {
+                user_group_store.borrow().get(&id).unwrap_or(&vec![]).clone()
+            })
+        }
+    }
 }
 
 pub fn get_group_messages(
@@ -320,10 +332,22 @@ pub async fn send_direct_message(
     }
 }
 
-pub fn get_friend_list(id: String) -> Vec<String> {
-    USER_FRIEND_STORE.with(|user_friend_store| {
-        user_friend_store.borrow().get(&id).unwrap_or(&vec![]).clone()
-    })
+pub async fn get_friend_list(id: String) -> Vec<String> {
+    let sender_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "checkId", (id.clone(),)).await;
+    match sender_validation {
+        Err(_err) => {
+            return vec![];
+        }
+        Ok(result) => {
+            let (id_valid,): (bool,) = result;
+            if !id_valid {
+                return vec![];
+            }
+            USER_FRIEND_STORE.with(|user_friend_store| {
+                user_friend_store.borrow().get(&id).unwrap_or(&vec![]).clone()
+            })
+        }
+    }
 }
 
 pub async fn get_friend_messages(sender_id:String, receiver_id: String) -> Vec<DirectMessage> {
