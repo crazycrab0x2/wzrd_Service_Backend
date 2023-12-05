@@ -1,13 +1,19 @@
 {
   "canisters": {
-    "wzrd_icp_backend": {
-      "candid": "src/wzrd_icp_backend/wzrd_icp_backend.did",
-      "package": "wzrd_icp_backend",
+    "wzrd_id_service": {
+      "candid": "src/wzrd_id_serevice/wzrd_id_service.did",
+      "package": "wzrd_id_service",
+      "type": "rust"
+    },
+    "wzrd_chat_service": {
+      "candid": "src/wzrd_chat_service/wzrd_chat_service.did",
+      "package": "wzrd_chat_service",
       "type": "rust"
     },
     "wzrd_icp_frontend": {
       "dependencies": [
-        "wzrd_icp_backend"
+        "wzrd_id_service",
+        "wzrd_chat_service"
       ],
       "source": [
         "src/wzrd_icp_frontend/assets"

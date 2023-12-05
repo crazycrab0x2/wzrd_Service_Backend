@@ -1,0 +1,16 @@
+type Profile = record {
+    "id": text;
+    "phone_number": opt text;
+    "email_address": opt text;
+    "first_name": opt text;
+    "last_name": opt text;
+};
+service : {
+    "Register": (text, opt text, opt text, opt text, opt text) -> (bool);
+    "checkId": (text) -> (bool) query;
+    "getProfile": (text) -> (Profile) query;
+    "SetPasskey": (text, text) -> (bool);
+    "GetPasskey": (text) -> (text) query;
+    "Login": (text, text) -> (bool) query;
+    "reserveID": (text, text, text) -> (bool);
+}
