@@ -1479,10 +1479,10 @@ name = "wzrd_chat_service"
 version = "0.1.0"
 dependencies = [
  "candid",
- "chrono",
  "getrandom",
  "ic-cdk",
  "ic-cdk-timers",
+ "libc",
  "pbkdf2",
  "rand",
  "rand_core",

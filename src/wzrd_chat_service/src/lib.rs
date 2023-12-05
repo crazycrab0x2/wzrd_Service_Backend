@@ -1,8 +1,8 @@
 use ic_cdk::{query, update};
+mod chat_utils;
 // use ic_cdk::api::time;
 // use std::vec::Vec;
 // use std::io::Write;
-mod chat_utils;
 // use crypto::aes::{ebc_decryptor, ebc_encryptor, KeySize};
 // use crypto::blockmodes::PkcsPadding;
 // use crypto::buffer::{BufferResult, ReadBuffer, WriteBuffer};
@@ -59,4 +59,9 @@ pub async fn get_friend_list(id:String) -> Vec<String> {
 #[update(name = "GetDirectMessages")]
 pub async fn get_friend_messages(sender_id: String, receiver_id: String) -> Vec<chat_utils::DirectMessage> {
     chat_utils::get_friend_messages(sender_id, receiver_id).await
+}
+
+#[update(name = "ViewMessage")]
+pub fn view_message(message_id: String) -> String {
+    chat_utils::view_message(message_id)
 }

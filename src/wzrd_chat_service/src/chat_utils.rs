@@ -2,12 +2,10 @@ use candid::Principal;
 use ic_cdk::export::candid::CandidType;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
-use std::time::{SystemTime, UNIX_EPOCH};
-// use chrono::{DateTime, NaiveDateTime, TimeSpan};
 
 #[derive(Clone, Debug, Default, CandidType)]
 pub struct GroupMessage {
-    pub id: usize,
+    pub id: String,
     pub sender_id: String,
     pub reply_id: Option<String>,
     pub content: String,
@@ -16,7 +14,7 @@ pub struct GroupMessage {
 
 #[derive(Clone, Debug, Default, CandidType)]
 pub struct DirectMessage {
-    pub id: usize,
+    pub id: String,
     pub sender_id: String,
     pub receiver_id: String,
     pub reply_id: Option<String>,
@@ -249,11 +247,11 @@ pub async fn send_group_message(
                     message_id = new_message_list.len();
                 }
                 let message = GroupMessage { 
-                    id: message_id, 
+                    id: message_id.to_string(), 
                     sender_id: id, 
                     reply_id,
                     content, 
-                    timestamp: "SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()".to_string()
+                    timestamp: "timestamp".to_string()
                 };
                 new_message_list.push(message);
                 group_message_store.borrow_mut().insert(group_id, new_message_list);
@@ -291,13 +289,12 @@ pub async fn send_direct_message(
                     }
                     DIRECT_MESSAGE_STORE.with(|direct_message_store| {
                         let message = DirectMessage { 
-                            id: direct_message_store.borrow().clone().len(), 
+                            id: direct_message_store.borrow().clone().len().to_string(), 
                             sender_id: sender_id.clone(), 
                             receiver_id: receiver_id.clone(), 
                             reply_id,
                             content, 
-                            timestamp: "SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()".to_string(), 
-                            // timestamp: DateTime::now().to_string(),            
+                            timestamp: "timestamp".to_string(), 
                             viewed: false 
                         };
                         direct_message_store.borrow_mut().push(message);
@@ -398,7 +395,17 @@ pub async fn get_friend_messages(sender_id:String, receiver_id: String) -> Vec<D
     }
 }
 
-pub fn view_message() -> bool {true}
+pub fn view_message(message_id: String) -> String {
+    DIRECT_MESSAGE_STORE.with(|direct_message_store| {
+        if let Some(message) = direct_message_store.borrow_mut().iter_mut().find(|message| message.id == message_id){
+            message.viewed = true;
+            return "Success!".to_string();
+        }
+        else{
+            return "Invalid Message ID!".to_string();
+        }
+    })
+}
 
 
 pub fn has_group_id(id: String) -> bool {
