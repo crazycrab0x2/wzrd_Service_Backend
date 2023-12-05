@@ -111,7 +111,7 @@ pub async fn join_group(
             GROUP_STORE.with(|group_store| {
                 if let Some(group) = group_store.borrow_mut().iter_mut().find(|group| *group.group_id == group_id){
                     let mut new_members = group.group_members.clone();
-                    if new_members.iter().find(|&member| *member == id).is_some(){
+                    if !new_members.iter().find(|&member| *member == id).is_some(){
                         new_members.push(id.clone());
                     }
                     group.group_members = new_members;
