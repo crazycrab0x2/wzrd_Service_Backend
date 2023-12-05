@@ -19,10 +19,10 @@ service : {
     "JoinGroup": (text, text) -> (text);
     "LeaveGroup": (text, text) -> (text);
     "GetGroupMembers": (text) -> (vec text) query;
-    "GetJoinedGroup": (text) -> (vec text) query;
+    "GetJoinedGroup": (text) -> (vec text);
     "GetGoupMessage": (text)-> (vec GroupMessage) query;
     "SendGroupMessage": (text, text, opt text, text) -> (text);
     "SendDirectMessage": (text, text, opt text, text) -> (text);
-    "GetConnectedMembers": (text) -> (vec text) query;
-    "GetDirectMessages": (text, text) -> (vec DirectMessage) query;
+    "GetConnectedMembers": (text) -> (vec text);
+    "GetDirectMessages": (text, text) -> (vec DirectMessage);
 }
