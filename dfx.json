@@ -1,7 +1,7 @@
 {
   "canisters": {
     "wzrd_id_service": {
-      "candid": "src/wzrd_id_serevice/wzrd_id_service.did",
+      "candid": "src/wzrd_id_service/wzrd_id_service.did",
       "package": "wzrd_id_service",
       "type": "rust"
     },

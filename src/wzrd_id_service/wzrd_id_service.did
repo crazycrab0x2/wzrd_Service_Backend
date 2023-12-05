@@ -4,7 +4,7 @@ type Profile = record {
     "email_address": opt text;
     "first_name": opt text;
     "last_name": opt text;
-};
+}
 service : {
     "Register": (text, opt text, opt text, opt text, opt text) -> (bool);
     "checkId": (text) -> (bool) query;
