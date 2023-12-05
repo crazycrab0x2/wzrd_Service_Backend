@@ -6,7 +6,7 @@ type GroupMessage = record {
     "timestamp": text;
 };
 type DirectMessage = record {
-    "id": nat64;
+    "id": text;
     "sender_id": text;
     "receiver_id": text;
     "reply_id": opt text;
@@ -25,4 +25,5 @@ service : {
     "SendDirectMessage": (text, text, opt text, text) -> (text);
     "GetConnectedMembers": (text) -> (vec text);
     "GetDirectMessages": (text, text) -> (vec DirectMessage);
+    "ViewMessage": (text) -> (text);
 }
