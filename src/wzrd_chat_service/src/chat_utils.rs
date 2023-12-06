@@ -1,5 +1,6 @@
 use candid::Principal;
 use ic_cdk::export::candid::CandidType;
+use ic_cdk::api::time;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 
@@ -251,7 +252,7 @@ pub async fn send_group_message(
                     sender_id: id, 
                     reply_id,
                     content, 
-                    timestamp: "timestamp".to_string()
+                    timestamp: (time()/1000000).to_string()
                 };
                 new_message_list.push(message);
                 group_message_store.borrow_mut().insert(group_id, new_message_list);
@@ -294,7 +295,7 @@ pub async fn send_direct_message(
                             receiver_id: receiver_id.clone(), 
                             reply_id,
                             content, 
-                            timestamp: "timestamp".to_string(), 
+                            timestamp: (time()/1000000).to_string(), 
                             viewed: false 
                         };
                         direct_message_store.borrow_mut().push(message);
