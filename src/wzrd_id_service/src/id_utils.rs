@@ -1,161 +1,152 @@
-use ic_cdk::export:: {candid::CandidType, Principal};
+use ic_cdk::api::time;
+use ic_cdk::export::candid::CandidType;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 
-type IdStore = BTreeMap<String, Principal>;
-type ProfileStore = BTreeMap<Principal, Profile>;
-type PhoneNumberStore = BTreeMap<String, Principal>;
-type EmailAddressStore = BTreeMap<String, Principal>;
-type PasskeyStore = BTreeMap<String, String>;
-
 #[derive(Clone, Debug, Default, CandidType)]
 pub struct Profile {
-    pub id: String,
     pub phone_number: Option<String>,
     pub email_address: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
 }
 
-thread_local! {
-    pub static PROFILE_STORE: RefCell<ProfileStore> = RefCell::default();
-    pub static ID_STORE: RefCell<IdStore> = RefCell::default();
-    pub static PASSKEY_STORE: RefCell<PasskeyStore> = RefCell::default();
-    pub static PHONE_NUMBER_STORE: RefCell<PhoneNumberStore> = RefCell::default();
-    pub static EMAIL_ADDRESS_STORE: RefCell<EmailAddressStore> = RefCell::default();
+#[derive(Clone, Debug, Default, CandidType)]
+pub struct RegisterRequestData {
+    pub challenge: String,
+    pub exclude_credentials: Vec<String>,
 }
 
-pub fn set_passkey(
-    id: String, 
-    passkey: String
-) -> bool{
-    PASSKEY_STORE.with(|passkey_store| {
-        *passkey_store.borrow_mut().entry(id).or_insert("None".to_string()) = passkey;
-    });
+#[derive(Clone, Debug, Default, CandidType)]
+pub struct AuthenticationRequestData {
+    pub challenge: String,
+    pub allow_credentials: Vec<String>,
+}
+
+type KeyIdStore = BTreeMap<String, Vec<String>>; //(user_name => vec<key_id>)
+type PublicKeyStore = BTreeMap<String, String>; //(key_id => public_key)
+type ProfileStore = BTreeMap<String, Profile>;  //(user_name => profile)
+
+thread_local! {
+    pub static KEY_ID_STORE: RefCell<KeyIdStore> = RefCell::default();
+    pub static PUBLIC_KEY_STORE: RefCell<PublicKeyStore> = RefCell::default();
+    pub static PROFILE_STORE: RefCell<ProfileStore> = RefCell::default();
+}
+
+pub fn register_request(user_name: String) -> RegisterRequestData {
+    KEY_ID_STORE.with(|key_id_store| {
+        let credential_list = key_id_store
+            .borrow()
+            .get(&user_name)
+            .unwrap_or(&vec![])
+            .clone();
+        RegisterRequestData {
+            challenge: get_challenge(),
+            exclude_credentials: credential_list,
+        }
+    })
+}
+
+pub fn register(user_name: String, key_id: String, public_key: String) -> bool {
+    KEY_ID_STORE.with(|key_id_store| {
+        let mut key_id_list = key_id_store
+            .borrow()
+            .get(&user_name)
+            .unwrap_or(&vec![])
+            .clone();
+        if key_id_list.contains(&key_id) {
+            false
+        } else {
+            key_id_list.push(key_id.clone());
+            key_id_store.borrow_mut().insert(user_name, key_id_list);
+            PUBLIC_KEY_STORE.with(|public_key_store| {
+                public_key_store.borrow_mut().insert(key_id, public_key);
+            });
+            true
+        }
+    })
+}
+
+pub fn authentication_request(user_name: String) -> AuthenticationRequestData {
+    if user_name == "".to_string() {
+        AuthenticationRequestData {
+            challenge: get_challenge(),
+            allow_credentials: vec![],
+        }
+    } 
+    else {
+        KEY_ID_STORE.with(|key_id_store| {
+            if !key_id_store.borrow().get(&user_name).is_some() {
+                AuthenticationRequestData {
+                    challenge: "".to_string(),
+                    allow_credentials: vec![],
+                }
+            } else {
+                AuthenticationRequestData {
+                    challenge: get_challenge(),
+                    allow_credentials: key_id_store.borrow().get(&user_name).unwrap().clone(),
+                }
+            }
+        })
+    }
+}
+
+pub fn authentication(user_name: String, authenticator_data: String, signature: String) -> bool {
     true
 }
 
-pub fn get_passkey(
-    id: String
-) -> String {
-    PASSKEY_STORE.with(|passkey_store| {
-        passkey_store.borrow().get(&id).unwrap_or(&"None".to_string()).clone()
-    })
-}
-
-pub fn has_id(
-    id: &String
-) -> bool {
-    ID_STORE.with(|id_store| {
-        let store = id_store.borrow();
-        store.get(id).is_some()
-    })
-}
-
-pub fn has_phone_number(
-    phone_number: &String
-) -> bool {
-    PHONE_NUMBER_STORE.with(|phone_number_store| {
-        let binding = phone_number_store.borrow();
-        binding.get(phone_number).is_some()
-    })
-}
-
-
-pub fn has_email_address(
-    email_address: &String
-) -> bool {
-    EMAIL_ADDRESS_STORE.with(|email_address_store| {
-        let binding = email_address_store.borrow();
-        binding.get(email_address).is_some()
-    })
-}
-
-pub fn add_id(
-    id: String, 
-    principal: Principal
-) -> Result<(), String> {
-    ID_STORE.with(|id_store| {
-        id_store.borrow_mut().insert(id.clone(), principal);
-    });
-
-    Ok(())
-}
-
-pub fn add_phone_number(
-    phone_number: Option<String>, 
-    principal: Principal
-) -> Result<(), String> {
-    if phone_number.is_some() {
-        PHONE_NUMBER_STORE.with(|store| {
-            store.borrow_mut().insert(phone_number.unwrap(), principal);
-        });
+pub fn get_challenge() -> String {
+    let mut number = time();
+    let char_set = vec![
+        "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r",
+        "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J",
+        "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1",
+        "2", "3", "4", "5", "6", "7", "8", "9"
+    ];
+    let mut result: String = "".to_string();
+    while number > 0 {
+        let index = (number % 62) as usize;
+        result.push_str(char_set[index]);
+        number /= 62;
     }
-    return Ok(());
+    result
 }
 
-pub fn add_email_address(
-    email_address: Option<String>, 
-    principal: Principal
-) -> Result<(), String> {
-    if email_address.is_some() {
-        EMAIL_ADDRESS_STORE.with(|store| {
-            store.borrow_mut().insert(email_address.unwrap(), principal);
-        });
-    }
-    Ok(())
+pub fn has_user(user_name: &String) -> bool {
+    KEY_ID_STORE.with(|key_id_store| key_id_store.borrow().get(user_name).is_some())
 }
 
-pub fn create_profile(
-    id: String,
-    principal: Principal,
+pub fn set_profile(
+    user_name: String,
     first_name: Option<String>,
     last_name: Option<String>,
     phone_number: Option<String>,
     email_address: Option<String>,
-) -> Result<(), String> {
-    let _ = add_id(id.clone(), principal);
-    let _ = add_phone_number(phone_number.clone(), principal);
-    let _ = add_email_address(email_address.clone(), principal);
-
+) -> bool {
     let profile = Profile {
-        id,
         first_name,
         last_name,
         phone_number,
         email_address,
     };
     PROFILE_STORE.with(|profile_store| {
-        profile_store.borrow_mut().insert(principal, profile);
+        profile_store.borrow_mut().insert(user_name, profile);
     });
-
-    Ok(())
+    true
 }
 
-pub fn get_profile(
-    id: String
-) -> Profile {
-    let none_profile = Profile{
-        id: "".to_string(),
+pub fn get_profile(user_name: String) -> Profile {
+    let none_profile = Profile {
         first_name: None,
         last_name: None,
         phone_number: None,
         email_address: None,
     };
-    let principal = ID_STORE.with(|id_store| id_store.borrow().get(&id).unwrap().clone());
-    PROFILE_STORE.with(|profile_store| profile_store.borrow().get(&principal).unwrap_or(&none_profile).clone())
-}
-
-pub fn login(
-    id: String, 
-    passkey: String
-) -> bool {
-    PASSKEY_STORE.with(|passkey_store| {
-        if let Some(value) = passkey_store.borrow().get(&id) {
-            if *value == passkey{
-                return true;
-            }
-        }
-        return false;
+    PROFILE_STORE.with(|profile_store| {
+        profile_store
+            .borrow()
+            .get(&user_name)
+            .unwrap_or(&none_profile)
+            .clone()
     })
 }

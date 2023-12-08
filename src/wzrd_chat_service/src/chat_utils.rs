@@ -53,7 +53,7 @@ pub async fn create_group(
     group_description: Option<String>
 ) -> String {
 
-    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "checkId", (id.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (id.clone(),)).await;
     match user_validation {
         Err(_err) => {
             return "Can't access store".to_string();
@@ -94,7 +94,7 @@ pub async fn join_group(
     id: String, 
     group_id: String
 ) -> String {
-    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "checkId", (id.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (id.clone(),)).await;
     match user_validation {
         Err(_err) => {
             return "Can't access store".to_string();
@@ -137,7 +137,7 @@ pub async fn leave_group(
     id: String, 
     group_id: String
 ) -> String {
-    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "checkId", (id.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (id.clone(),)).await;
     match user_validation {
         Err(_err) => {
             return "Can't access store".to_string();
@@ -185,7 +185,7 @@ pub fn get_group_members(
 pub async fn get_group_list(
     id: String
 ) -> Vec<String> {
-    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "checkId", (id.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (id.clone(),)).await;
     match user_validation {
         Err(_err) => {
             return vec![];
@@ -223,7 +223,7 @@ pub async fn send_group_message(
     reply_id: Option<String>,
     content: String
 ) -> String {
-    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "checkId", (id.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (id.clone(),)).await;
     match user_validation {
         Err(_err) => {
             return "Can't access store".to_string();
@@ -268,7 +268,7 @@ pub async fn send_direct_message(
     reply_id: Option<String>,
     content: String
 ) -> String {
-    let sender_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "checkId", (sender_id.clone(),)).await;
+    let sender_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (sender_id.clone(),)).await;
     match sender_validation {
         Err(_err) => {
             return "Can't access store".to_string();
@@ -278,7 +278,7 @@ pub async fn send_direct_message(
             if !id_valid {
                 return "Invalid User ID!".to_string();
             }
-            let receiver_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "checkId", (receiver_id.clone(),)).await;
+            let receiver_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (receiver_id.clone(),)).await;
             match receiver_validation {
                 Err(_err) => {
                     return "Can't access store".to_string();
@@ -331,7 +331,7 @@ pub async fn send_direct_message(
 }
 
 pub async fn get_friend_list(id: String) -> Vec<String> {
-    let sender_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "checkId", (id.clone(),)).await;
+    let sender_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (id.clone(),)).await;
     match sender_validation {
         Err(_err) => {
             return vec![];
@@ -349,7 +349,7 @@ pub async fn get_friend_list(id: String) -> Vec<String> {
 }
 
 pub async fn get_friend_messages(sender_id:String, receiver_id: String) -> Vec<DirectMessage> {
-    let sender_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "checkId", (sender_id.clone(),)).await;
+    let sender_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (sender_id.clone(),)).await;
     match sender_validation {
         Err(_err) => {
             return vec![];
@@ -359,7 +359,7 @@ pub async fn get_friend_messages(sender_id:String, receiver_id: String) -> Vec<D
             if !id_valid {
                 return vec![];
             }
-            let receiver_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "checkId", (receiver_id.clone(),)).await;
+            let receiver_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (receiver_id.clone(),)).await;
             match receiver_validation {
                 Err(_err) => {
                     return vec![];

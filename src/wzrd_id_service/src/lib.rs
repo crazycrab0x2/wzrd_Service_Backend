@@ -11,94 +11,42 @@ mod id_utils;
 // use rand_core::{RngCore, OsRng};
 // use rand::Rng;
 
-#[update(name = "SetPasskey")]
-pub fn set_passkey(id: String, passkey: String) -> bool{
-    id_utils::set_passkey(id, passkey)
-}
-
-#[query(name = "GetPasskey")]
-pub fn get_passkey(id: String) -> String {
-    id_utils::get_passkey(id)
-}
-
-#[query(name = "checkId")]
-pub fn check_id(id: String) -> bool {
-    id_utils::has_id(&id)
-}
-
-#[query(name = "getPrincipal")]
-pub fn get_principal(id: String) -> String {
-    // ic_cdk::caller().to_string()
-    id_utils::ID_STORE.with(|id_store| id_store.borrow().get(&id).unwrap().clone().to_string())
-}
-
-#[query(name="Login")]
-fn login(id: String, passkey: String) -> bool {
-    // let id = decrypt(_id.as_bytes(), challenge.as_bytes());
-    // util::has_id(id)
-    id_utils::login(id, passkey)
+#[query(name = "RegisterRequest")]
+pub fn register_request(user_name: String) -> id_utils::RegisterRequestData {
+    id_utils::register_request(user_name)
 }
 
 #[update(name = "Register")]
-pub fn register(
-    id: String,
-    first_name: Option<String>,
-    last_name: Option<String>,
-    phone_number: Option<String>,
-    email_address: Option<String>,
-) -> bool {
-    let res = id_utils::has_id(&id);
-    if res {
-        return false;
-    }
-
-    let caller = ic_cdk::caller();
-
-    let _ = id_utils::add_id(id.clone(), caller);
-    let _ = id_utils::add_phone_number(phone_number.clone(), caller);
-    let _ = id_utils::add_email_address(email_address.clone(), caller);
-
-    id_utils::create_profile(
-        id.clone(),
-        caller,
-        first_name,
-        last_name,
-        phone_number,
-        email_address,
-    )
-    .unwrap();
-    true
+pub fn register(user_name: String, key_id: String, public_key: String) -> bool {
+    id_utils::register(user_name, key_id, public_key)
 }
 
-#[update(name = "reserveID")]
-pub fn reserve_id(id: String, phone_number: String, email_address: String) -> bool {
-    if id_utils::has_id(&id) {
-        return false;
-    }
-
-    if id_utils::has_phone_number(&phone_number) {
-        return false;
-    }
-
-    if id_utils::has_email_address(&email_address) {
-        return false;
-    }
-
-    let caller = ic_cdk::caller();
-
-    id_utils::create_profile(
-        id,
-        caller,
-        None,
-        None,
-        Some(phone_number),
-        Some(email_address),
-    )
-    .unwrap();
-    return true;
+#[query(name = "AuthenticationRequest")]
+pub fn authentication_request(user_name: String) -> id_utils::AuthenticationRequestData {
+    id_utils::authentication_request(user_name)
 }
 
-#[query(name = "getProfile")]
-pub fn get_profile(id: String) -> id_utils::Profile {
-    id_utils::get_profile(id)
+#[query(name = "Authentication")]
+pub fn authentication(user_name: String, authenticator_data: String, signature: String) -> bool {
+    id_utils::authentication(user_name, authenticator_data, signature)
+}
+
+#[query(name = "CheckUser")]
+pub fn check_user(user_name: String) -> bool {
+    id_utils::has_user(&user_name)
+}
+
+#[query(name = "GetPrincipal")]
+pub fn get_principal() -> String {
+    ic_cdk::caller().to_string()
+}
+
+#[query(name = "GetProfile")]
+pub fn get_profile(user_name: String) -> id_utils::Profile {
+    id_utils::get_profile(user_name)
+}
+
+#[update(name = "SetProfile")]
+pub fn set_profile(user_name: String, first_name: Option<String>, last_name: Option<String>, email_address: Option<String>, phone_number: Option<String>) -> bool {
+    id_utils::set_profile(user_name, first_name, last_name, email_address, phone_number)
 }
