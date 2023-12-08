@@ -1,16 +1,24 @@
 type Profile = record {
-    "id": text;
-    "phone_number": opt text;
-    "email_address": opt text;
     "first_name": opt text;
     "last_name": opt text;
-}
+    "email_address": opt text;
+    "phone_number": opt text;
+};
+type RegisterRequestData = record {
+    "challenge": text;
+    "exclude_credentials": vec text;
+};
+type AuthenticationRequestData = record {
+    "challenge": text;
+    "allow_credentials": vec text;
+};
 service : {
-    "Register": (text, opt text, opt text, opt text, opt text) -> (bool);
-    "checkId": (text) -> (bool) query;
-    "getProfile": (text) -> (Profile) query;
-    "SetPasskey": (text, text) -> (bool);
-    "GetPasskey": (text) -> (text) query;
-    "Login": (text, text) -> (bool) query;
-    "reserveID": (text, text, text) -> (bool);
+    "RegisterRequest" (text) -> (RegisterRequestData) query;
+    "Register" (text, text, text) -> (bool);
+    "AuthenticationRequest" (text) -> (AuthenticationRequestData) query;
+    "Authentication" (text, text, text) -> (bool) query;
+    "SetProfile": (text, opt text, opt text, opt text, opt text) -> (bool);
+    "GetProfile": (text) -> (Profile) query;
+    "CheckUser": (text) -> (bool) query;
+    "GetPrincipal": () -> (text) query;
 }
