@@ -91,8 +91,17 @@ pub fn authentication_request(user_name: String) -> AuthenticationRequestData {
     }
 }
 
-pub fn authentication(user_name: String, authenticator_data: String, signature: String) -> bool {
-    true
+pub fn authentication(user_name: String, key_id: String, authenticator_data: String, signature: String) -> bool {
+    KEY_ID_STORE.with(|key_id_store|{
+        let user_key_list = key_id_store.borrow().get(&user_name).unwrap_or(&vec![]).clone();
+        if user_key_list.contains(&key_id) {
+            true
+            // authorize authenticator_data and signature with stored public_key corresponding with key_id
+        }
+        else{
+            false
+        }
+    })
 }
 
 pub fn get_challenge() -> String {
