@@ -27,8 +27,8 @@ pub fn authentication_request(user_name: String) -> id_utils::AuthenticationRequ
 }
 
 #[query(name = "Authentication")]
-pub fn authentication(user_name: String, authenticator_data: String, signature: String) -> bool {
-    id_utils::authentication(user_name, authenticator_data, signature)
+pub fn authentication(user_name: String, key_id: String, authenticator_data: String, signature: String) -> bool {
+    id_utils::authentication(user_name, key_id, authenticator_data, signature)
 }
 
 #[query(name = "CheckUser")]
