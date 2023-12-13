@@ -95,8 +95,15 @@ pub fn authentication(user_name: String, key_id: String, authenticator_data: Str
     KEY_ID_STORE.with(|key_id_store|{
         let user_key_list = key_id_store.borrow().get(&user_name).unwrap_or(&vec![]).clone();
         if user_key_list.contains(&key_id) {
-            true
-            // authorize authenticator_data and signature with stored public_key corresponding with key_id
+            PUBLIC_KEY_STORE.with(|public_key_store| {
+                let mut public_key = public_key_store.borrow().get(&key_id).unwrap("".to_string()).clone();
+                if public_key != "".to_string() {
+                    // authorize authenticator_data and signature with stored public_key corresponding with key_id
+                }
+                else{
+                    false
+                }
+            })
         }
         else{
             false
