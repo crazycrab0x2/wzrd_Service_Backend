@@ -10,15 +10,17 @@
       "package": "wzrd_chat_service",
       "type": "rust"
     },
-    "wzrd_icp_frontend": {
-      "dependencies": [
-        "wzrd_id_service",
-        "wzrd_chat_service"
-      ],
-      "source": [
-        "src/wzrd_icp_frontend/assets"
-      ],
-      "type": "assets"
+    "wzrd_btc_service": {
+      "type": "custom",
+      "package": "wzrd_btc_service",
+      "candid": "src/wzrd_btc_service/wzrd_btc_service.did",
+      "wasm": "target/wasm32-unknown-unknown/release/wzrd_btc_service.wasm",
+      "build": "src/wzrd_btc_service/build.sh",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
     }
   },
   "defaults": {
