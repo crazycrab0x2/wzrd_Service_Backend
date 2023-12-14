@@ -1,5 +1,6 @@
 [workspace]
 members = [
     "src/wzrd_id_service",
-    "src/wzrd_chat_service"
+    "src/wzrd_chat_service",
+    "src/wzrd_btc_service"
 ]

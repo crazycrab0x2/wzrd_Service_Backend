@@ -96,9 +96,10 @@ pub fn authentication(user_name: String, key_id: String, authenticator_data: Str
         let user_key_list = key_id_store.borrow().get(&user_name).unwrap_or(&vec![]).clone();
         if user_key_list.contains(&key_id) {
             PUBLIC_KEY_STORE.with(|public_key_store| {
-                let mut public_key = public_key_store.borrow().get(&key_id).unwrap("".to_string()).clone();
+                let mut public_key = public_key_store.borrow().get(&key_id).unwrap().clone();
                 if public_key != "".to_string() {
                     // authorize authenticator_data and signature with stored public_key corresponding with key_id
+                    true
                 }
                 else{
                     false
@@ -126,6 +127,14 @@ pub fn get_challenge() -> String {
         number /= 62;
     }
     result
+}
+
+pub fn generate_token(user_name: String) -> String {
+    "".to_string()
+}
+
+pub fn check_and_update_token(token: String) -> String {
+    "".to_string()
 }
 
 pub fn has_user(user_name: &String) -> bool {
