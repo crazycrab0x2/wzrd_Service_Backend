@@ -10,12 +10,12 @@
       "package": "wzrd_chat_service",
       "type": "rust"
     },
-    "wzrd_btc_service": {
+    "wzrd_wallet_service": {
       "type": "custom",
-      "package": "wzrd_btc_service",
-      "candid": "src/wzrd_btc_service/wzrd_btc_service.did",
-      "wasm": "target/wasm32-unknown-unknown/release/wzrd_btc_service.wasm",
-      "build": "src/wzrd_btc_service/build.sh",
+      "package": "wzrd_wallet_service",
+      "candid": "src/wzrd_wallet_service/wzrd_wallet_service.did",
+      "wasm": "target/wasm32-unknown-unknown/release/wzrd_wallet_service.wasm",
+      "build": "src/wzrd_wallet_service/build.sh",
       "metadata": [
         {
           "name": "candid:service"

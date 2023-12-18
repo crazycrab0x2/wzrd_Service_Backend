@@ -1,0 +1,10 @@
+
+service : {
+    "Get_BTC_Address": (user_name: text) -> (text);
+    "Get_BTC_Balance": (btc_address: text) -> (nat64);
+    "Send_BTC": (record {
+      user_name: text;
+      destination_address: text;
+      amount_in_satoshi: nat64;
+    }) -> (text);
+}

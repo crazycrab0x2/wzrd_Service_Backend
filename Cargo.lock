@@ -1651,21 +1651,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "wzrd_btc_service"
-version = "0.1.0"
-dependencies = [
- "bitcoin",
- "bs58",
- "candid 0.9.11",
- "hex",
- "ic-cdk 0.10.0",
- "ic-cdk-macros 0.7.1",
- "ripemd",
- "serde",
- "sha2",
-]
-
-[[package]]
 name = "wzrd_chat_service"
 version = "0.1.0"
 dependencies = [
@@ -1692,5 +1677,20 @@ dependencies = [
  "pbkdf2",
  "rand",
  "rand_core",
+ "sha2",
+]
+
+[[package]]
+name = "wzrd_wallet_service"
+version = "0.1.0"
+dependencies = [
+ "bitcoin",
+ "bs58",
+ "candid 0.9.11",
+ "hex",
+ "ic-cdk 0.10.0",
+ "ic-cdk-macros 0.7.1",
+ "ripemd",
+ "serde",
  "sha2",
 ]
