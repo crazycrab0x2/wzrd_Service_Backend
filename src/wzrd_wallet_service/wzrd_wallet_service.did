@@ -3,10 +3,15 @@ service : {
     "Get_BTC_Address": (user_name: text) -> (text);
     "Get_BTC_Balance": (btc_address: text) -> (nat64);
     "Send_BTC": (record {
-      user_name: text;
+      sender: text;
       destination_address: text;
       amount_in_satoshi: nat64;
     }) -> (text);
     "Get_ICP_Address": (text) -> (text);
     "Get_ICP_Balance": (text) -> (text);
+    "Send_ICP":(record {
+      sender: text;
+      destination_address: text;
+      amount_in_e8s: nat64;
+    }) -> (text);
 }
