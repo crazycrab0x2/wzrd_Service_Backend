@@ -11,13 +11,12 @@ pub struct SendRequest {
     pub amount_in_e8s: u64,
 }
 
-#[update(name="create_ledger_account")]
 pub fn get_icp_address(user_name: String) -> String{
     let mut hasher = Sha256::new();
     hasher.update(user_name);
     let result = hasher.finalize();
     let sub_id= Subaccount(result.into());
-    let new_subaccount = AccountIdentifier::new( &caller(), &sub_id);
+    let new_subaccount = AccountIdentifier::new( &ic_cdk::api::id(), &sub_id);
     new_subaccount.to_string()
 }
 
@@ -25,7 +24,7 @@ pub async fn send(request: SendRequest) -> String {
     let mut hasher = Sha256::new();
     hasher.update(request.sender);
     let result = hasher.finalize();
-    let sender_id= Subaccount(result.into());
+    let sender_id: Option<Subaccount> = Some(Subaccount(result.into()));
 
     let block_index = transfer(
         MAINNET_LEDGER_CANISTER_ID,
@@ -33,7 +32,7 @@ pub async fn send(request: SendRequest) -> String {
           memo: Memo(0),
           amount: Tokens::from_e8s(request.amount_in_e8s),
           fee: DEFAULT_FEE,
-          from_subaccount: Some(sender_id),
+          from_subaccount: sender_id,
           to: AccountIdentifier::from_hex(&request.destination_address.as_str()).unwrap(),
           created_at_time: None,
         }
@@ -49,7 +48,7 @@ pub async fn get_icp_balance(user_name: String) -> String {
     let balance = account_balance(
         MAINNET_LEDGER_CANISTER_ID,
         AccountBalanceArgs {
-          account: AccountIdentifier::new(&caller(), &sub_id)
+          account: AccountIdentifier::new(&ic_cdk::api::id(), &sub_id)
         }
       ).await;
     balance.unwrap().e8s().to_string()

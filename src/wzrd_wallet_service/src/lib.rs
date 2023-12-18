@@ -7,8 +7,8 @@ use ic_cdk_macros::update;
 use std::cell::{Cell, RefCell};
 
 thread_local! {
-    static NETWORK: Cell<BitcoinNetwork> = Cell::new(BitcoinNetwork::Regtest);
-    static KEY_NAME: RefCell<String> = RefCell::new(String::from("dfx_test_key"));
+    static NETWORK: Cell<BitcoinNetwork> = Cell::new(BitcoinNetwork::Mainnet);
+    static KEY_NAME: RefCell<String> = RefCell::new(String::from("key_1"));
 }
 
 #[update (name = "Get_BTC_Address")]
