@@ -1,31 +1,47 @@
 use ic_cdk::api::management_canister::bitcoin::{
-    BitcoinNetwork, GetUtxosResponse, MillisatoshiPerByte,
+    BitcoinNetwork, 
+    GetUtxosResponse, 
+    MillisatoshiPerByte, 
+    Utxo, 
+    GetBalanceRequest, 
+    GetCurrentFeePercentilesRequest, 
+    GetUtxosRequest, 
+    Satoshi, 
+    SendTransactionRequest
 };
-use crate::{bitcoin_api, ecdsa_api};
-use bitcoin::util::psbt::serialize::Serialize;
 use bitcoin::{
-    blockdata::{script::Builder, witness::Witness},
+    blockdata::{
+        script::Builder, 
+        witness::Witness
+    },
     hashes::Hash,
-    Address, AddressType, EcdsaSighashType, OutPoint, Script, Transaction, TxIn, TxOut, Txid,
+    util::psbt::serialize::Serialize,
+    Address, 
+    AddressType, 
+    EcdsaSighashType, 
+    OutPoint, 
+    Script, 
+    Transaction, 
+    TxIn, 
+    TxOut, 
+    Txid,
 };
-use ic_cdk::print;
 use sha2::Digest;
 use std::str::FromStr;
-use crate::types::*;
+use crate::btc_types::*;
 use candid::Principal;
-use ic_cdk::{api::call::call_with_payment, call};
-use ic_cdk::api::management_canister::bitcoin::{
-    GetBalanceRequest, GetCurrentFeePercentilesRequest, GetUtxosRequest,
-    Satoshi, SendTransactionRequest,
+use ic_cdk::{
+    api::call::call_with_payment, 
+    call
 };
-
-use ic_cdk::api::management_canister::bitcoin::Utxo;
 
 const SIGN_WITH_ECDSA_COST_CYCLES: u64 = 10_000_000_000;
 const SIG_HASH_TYPE: EcdsaSighashType = EcdsaSighashType::All;
 const GET_BALANCE_COST_CYCLES: u64 = 100_000_000;
 const GET_CURRENT_FEE_PERCENTILES_CYCLES: u64 = 100_000_000;
 const GET_UTXOS_COST_CYCLES: u64 = 10_000_000_000;
+const SEND_TRANSACTION_BASE_CYCLES: u64 = 5_000_000_000;
+const SEND_TRANSACTION_PER_BYTE_CYCLES: u64 = 20_000_000;
 
 pub async fn get_btc_address (network: BitcoinNetwork, key_name: String, user_name: String) -> String {
     let public_key = ecdsa_public_key(key_name, vec![user_name.as_bytes().to_vec()]).await;
@@ -109,8 +125,7 @@ pub async fn send(
         fee_percentiles[50]
     };
 
-    let own_public_key =
-        ecdsa_api::ecdsa_public_key(key_name.clone(), derivation_path.clone()).await;
+    let own_public_key = ecdsa_public_key(key_name.clone(), derivation_path.clone()).await;
     let own_address = public_key_to_btc_address(network, &own_public_key);
 
     let own_utxos = get_utxos(network, own_address.clone())
@@ -131,9 +146,6 @@ pub async fn send(
     )
     .await;
 
-    let tx_bytes = transaction.serialize();
-    print(&format!("Transaction to sign: {}", hex::encode(tx_bytes)));
-
     // Sign the transaction.
     let signed_transaction = sign_transaction(
         &own_public_key,
@@ -141,19 +153,13 @@ pub async fn send(
         transaction,
         key_name,
         derivation_path,
-        ecdsa_api::sign_with_ecdsa,
+        sign_with_ecdsa,
     )
     .await;
 
     let signed_transaction_bytes = signed_transaction.serialize();
-    print(&format!(
-        "Signed transaction: {}",
-        hex::encode(&signed_transaction_bytes)
-    ));
 
-    print("Sending transaction...");
-    bitcoin_api::send_transaction(network, signed_transaction_bytes).await;
-    print("Done");
+    send_transaction(network, signed_transaction_bytes).await;
 
     signed_transaction.txid()
 }
@@ -166,7 +172,6 @@ async fn build_transaction(
     amount: Satoshi,
     fee_per_byte: MillisatoshiPerByte,
 ) -> Transaction {
-    print("Building transaction...");
     let mut total_fee = 0;
     loop {
         let transaction =
@@ -188,7 +193,6 @@ async fn build_transaction(
         let signed_tx_bytes_len = signed_transaction.serialize().len() as u64;
 
         if (signed_tx_bytes_len * fee_per_byte) / 1000 == total_fee {
-            print(&format!("Transaction built with fee {}.", total_fee));
             return transaction;
         } else {
             total_fee = (signed_tx_bytes_len * fee_per_byte) / 1000;
@@ -367,4 +371,45 @@ pub async fn get_utxos(network: BitcoinNetwork, address: String) -> GetUtxosResp
     .await;
 
     utxos_res.unwrap().0
+}
+
+pub async fn sign_with_ecdsa(
+    key_name: String,
+    derivation_path: Vec<Vec<u8>>,
+    message_hash: Vec<u8>,
+) -> Vec<u8> {
+    let res: Result<(SignWithECDSAReply,), _> = call_with_payment(
+        Principal::management_canister(),
+        "sign_with_ecdsa",
+        (SignWithECDSA {
+            message_hash,
+            derivation_path,
+            key_id: EcdsaKeyId {
+                curve: EcdsaCurve::Secp256k1,
+                name: key_name,
+            },
+        },),
+        SIGN_WITH_ECDSA_COST_CYCLES,
+    )
+    .await;
+
+    res.unwrap().0.signature
+}
+
+pub async fn send_transaction(network: BitcoinNetwork, transaction: Vec<u8>) {
+    let transaction_fee = SEND_TRANSACTION_BASE_CYCLES
+        + (transaction.len() as u64) * SEND_TRANSACTION_PER_BYTE_CYCLES;
+
+    let res: Result<(), _> = call_with_payment(
+        Principal::management_canister(),
+        "bitcoin_send_transaction",
+        (SendTransactionRequest {
+            network: network.into(),
+            transaction,
+        },),
+        transaction_fee,
+    )
+    .await;
+
+    res.unwrap();
 }

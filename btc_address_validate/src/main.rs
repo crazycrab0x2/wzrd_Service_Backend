@@ -6,7 +6,7 @@ use crypto::sha2::Sha256;
 const DIGITS58: [char; 58] = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
 
 fn main() {
-    println!("{}", validate_address("mie8p4Jk2BYaMc3ycECgwzwdywpCFZcDAu"));
+    println!("{}", validate_address("13MtpRwrt6i153RP7Eb1FCU9nnx2dTdoEQ"));
 }
 
 fn validate_address(address: &str) -> bool {
