@@ -1,5 +1,6 @@
 mod btc_types;
 mod btc_utils;
+mod icp_utils;
 
 use ic_cdk::api::management_canister::bitcoin::BitcoinNetwork;
 use ic_cdk_macros::update;
@@ -40,3 +41,18 @@ pub async fn send_btc(request: btc_types::SendRequest) -> String {
     tx_id.to_string()
 }
 
+
+#[update (name = "Get_ICP_Address")]
+pub async fn get_icp_address(user_name: String) -> String {
+    icp_utils::create_ledger_account(user_name)
+}
+
+#[update (name = "Get_ICP_Balance")]
+pub async fn get_icp_balance(user_name: String) -> String {
+    icp_utils::get_icp_balance(user_name).await
+}
+
+#[update (name = "Send_ICP")]
+pub async fn send_icp(request: btc_types::SendRequest) -> String {
+    "sdfsd".to_string()
+}
