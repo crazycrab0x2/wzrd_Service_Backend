@@ -26,7 +26,7 @@ pub async fn get_btc_balance(address: String) -> u64 {
 
 #[update (name = "Send_BTC")]
 pub async fn send_btc(request: btc_types::SendRequest) -> String {
-    let derivation_path = vec![request.user_name.as_bytes().to_vec()];
+    let derivation_path = vec![request.sender.as_bytes().to_vec()];
     let network = NETWORK.with(|n| n.get());
     let key_name = KEY_NAME.with(|kn| kn.borrow().to_string());
     let tx_id = btc_utils::send(
@@ -44,7 +44,7 @@ pub async fn send_btc(request: btc_types::SendRequest) -> String {
 
 #[update (name = "Get_ICP_Address")]
 pub async fn get_icp_address(user_name: String) -> String {
-    icp_utils::create_ledger_account(user_name)
+    icp_utils::get_icp_address(user_name)
 }
 
 #[update (name = "Get_ICP_Balance")]
@@ -53,6 +53,6 @@ pub async fn get_icp_balance(user_name: String) -> String {
 }
 
 #[update (name = "Send_ICP")]
-pub async fn send_icp(request: btc_types::SendRequest) -> String {
-    "sdfsd".to_string()
+pub async fn send_icp(request: icp_utils::SendRequest) -> String {
+    icp_utils::send(request).await
 }
