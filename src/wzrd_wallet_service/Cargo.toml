@@ -1,5 +1,5 @@
 [package]
-name = "wzrd_btc_service"
+name = "wzrd_wallet_service"
 version = "0.1.0"
 edition = "2018"
 

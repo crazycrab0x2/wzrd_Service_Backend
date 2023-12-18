@@ -3,6 +3,7 @@ use serde::Serialize;
 
 #[derive(CandidType, Deserialize)]
 pub struct SendRequest {
+    pub user_name: String,
     pub destination_address: String,
     pub amount_in_satoshi: u64,
 }

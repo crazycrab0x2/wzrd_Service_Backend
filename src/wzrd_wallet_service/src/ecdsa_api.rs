@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::types::*;
 use candid::Principal;
 use ic_cdk::{api::call::call_with_payment, call};
