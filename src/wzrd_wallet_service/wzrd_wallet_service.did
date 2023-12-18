@@ -7,4 +7,6 @@ service : {
       destination_address: text;
       amount_in_satoshi: nat64;
     }) -> (text);
+    "Get_ICP_Address": (text) -> (text);
+    "Get_ICP_Balance": (text) -> (text);
 }
