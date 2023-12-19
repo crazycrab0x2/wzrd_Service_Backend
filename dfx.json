@@ -11,11 +11,9 @@
       "type": "rust"
     },
     "wzrd_wallet_service": {
-      "type": "custom",
+      "type": "rust",
       "package": "wzrd_wallet_service",
       "candid": "src/wzrd_wallet_service/wzrd_wallet_service.did",
-      "wasm": "target/wasm32-unknown-unknown/release/wzrd_wallet_service.wasm",
-      "build": "src/wzrd_wallet_service/build.sh",
       "metadata": [
         {
           "name": "candid:service"
