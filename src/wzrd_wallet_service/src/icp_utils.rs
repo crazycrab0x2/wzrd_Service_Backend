@@ -40,15 +40,11 @@ pub async fn send(request: SendRequest) -> String {
     block_index.unwrap().unwrap().to_string()
 }
 
-pub async fn get_icp_balance(user_name: String) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(user_name);
-    let result = hasher.finalize();
-    let sub_id= Subaccount(result.into());
+pub async fn get_icp_balance(address: String) -> String {
     let balance = account_balance(
         MAINNET_LEDGER_CANISTER_ID,
         AccountBalanceArgs {
-          account: AccountIdentifier::new(&ic_cdk::api::id(), &sub_id)
+          account: AccountIdentifier::from_hex(address.as_str()).unwrap()
         }
       ).await;
     balance.unwrap().e8s().to_string()
