@@ -63,7 +63,7 @@ pub async fn get_cketh_address(user_name: String) -> String {
     eth_utils::get_cketh_address(user_name)
 }
 
-// #[update (name = "Get_ETH_Address")]
-// pub async fn get_eth_address(user_name: String) -> String {
-//     eth_utils::get_eth_address(user_name)
-// }
+#[update (name = "Get_ETH_Address")]
+pub async fn get_eth_address(user_name: String) -> String {
+    eth_utils::get_eth_address(user_name)
+}
