@@ -1,7 +1,6 @@
 mod btc_types;
 mod btc_utils;
 mod icp_utils;
-mod eth_utils;
 
 use ic_cdk::api::management_canister::bitcoin::BitcoinNetwork;
 use ic_cdk_macros::update;
@@ -56,14 +55,4 @@ pub async fn get_icp_balance(user_name: String) -> String {
 #[update (name = "Send_ICP")]
 pub async fn send_icp(request: icp_utils::SendRequest) -> String {
     icp_utils::send(request).await
-}
-
-#[update (name = "Get_ckETH_Address")]
-pub async fn get_cketh_address(user_name: String) -> String {
-    eth_utils::get_cketh_address(user_name)
-}
-
-#[update (name = "Get_ETH_Address")]
-pub async fn get_eth_address() -> String {
-    eth_utils::get_eth_address().await
 }
