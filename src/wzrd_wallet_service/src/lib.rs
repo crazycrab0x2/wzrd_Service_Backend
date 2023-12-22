@@ -64,6 +64,6 @@ pub async fn get_cketh_address(user_name: String) -> String {
 }
 
 #[update (name = "Get_ETH_Address")]
-pub async fn get_eth_address(user_name: String) -> String {
-    eth_utils::get_eth_address(user_name)
+pub async fn get_eth_address() -> String {
+    eth_utils::get_eth_address().await
 }
