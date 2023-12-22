@@ -14,6 +14,4 @@ service : {
       destination_address: text;
       amount_in_e8s: nat64;
     }) -> (text);
-    "Get_ckETH_Address": (text) -> (text);
-    "Get_ETH_Address": () -> (text);
 }
