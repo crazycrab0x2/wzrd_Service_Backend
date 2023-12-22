@@ -1,7 +1,16 @@
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use sha2::{Digest, Sha256};
+use candid::Principal;
+use candid::CandidType;
 // use ethereum_types::{H160, H256};
 // use tiny_keccak::{Keccak};
+#[derive(Clone, Debug, CandidType)]
+pub enum AuthType {
+    Rpc,
+    RegisterProvider,
+    FreeRpc,
+    Admin,
+}
 
 
 pub fn get_cketh_address(user_name: String) -> String{
@@ -13,11 +22,15 @@ pub fn get_cketh_address(user_name: String) -> String{
     new_subaccount.to_string()
 }
 
-pub fn get_eth_address(user_name: String) -> String {
-    // let mut hasher = Keccak::v256();
-    // let mut result = [0u8; 32];
-    // hasher.update(user_name.as_str().as_bytes());
-    // result = hasher.finalize();
-    // H160::from(H256::from_slice(&result[12..])).to_string()
-    "".to_string()
+pub async fn get_eth_address() -> String {
+    let id = ic_cdk::api::id();
+    let user_validation = ic_cdk::call::<(Principal, AuthType,), ()>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "authorize", (id.clone(), AuthType::RegisterProvider,)).await;
+    match user_validation {
+        Err(_err) => {
+            return "Can't access store".to_string();
+        }
+        Ok(result) => {
+            "okay".to_owned()
+        }
+    }
 }
