@@ -1795,6 +1795,7 @@ dependencies = [
  "pbkdf2",
  "rand",
  "rand_core",
+ "serde",
  "sha2",
 ]
 
