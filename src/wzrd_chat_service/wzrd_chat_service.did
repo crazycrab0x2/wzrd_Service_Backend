@@ -13,17 +13,47 @@ type DirectMessage = record {
     "content": text;
     "timestamp": text;
     "viewed": bool;
-}
+};
+type CreateGroupParams = record {
+    "user_name": text; 
+    "group_id": text; 
+    "group_name": text; 
+    "group_description": opt text;
+};
+type LeaveGroupParams = record {
+    "user_name": text; 
+    "group_id": text;
+};
+type JoinGroupParam = record {
+    "user_name": text; 
+    "group_id": text;
+};
+type SendGroupMessageParam = record {
+    "user_name": text; 
+    "group_id": text; 
+    "reply_id": opt text;
+    "content": text;
+};
+type SendDirectMessageParam = record {
+    "sender": text; 
+    "receiver": text; 
+    "reply_id": opt text;
+    "content": text;
+};
+type GetDirectMessageParam = record {
+    "sender": text; 
+    "receiver": text;
+};
 service : {
-    "CreateGroup": (text, text, text, opt text) -> (text);
-    "JoinGroup": (text, text) -> (text);
-    "LeaveGroup": (text, text) -> (text);
+    "CreateGroup": (params: CreateGroupParams) -> (text);
+    "JoinGroup": (params: JoinGroupParam) -> (text);
+    "LeaveGroup": (params: LeaveGroupParams) -> (text);
     "GetGroupMembers": (text) -> (vec text) query;
     "GetJoinedGroup": (text) -> (vec text);
     "GetGoupMessage": (text)-> (vec GroupMessage) query;
-    "SendGroupMessage": (text, text, opt text, text) -> (text);
-    "SendDirectMessage": (text, text, opt text, text) -> (text);
+    "SendGroupMessage": (params: SendGroupMessageParam) -> (text);
+    "SendDirectMessage": (params: SendDirectMessageParam) -> (text);
     "GetConnectedMembers": (text) -> (vec text);
-    "GetDirectMessages": (text, text) -> (vec DirectMessage);
+    "GetDirectMessages": (params: GetDirectMessageParam) -> (vec DirectMessage);
     "ViewMessage": (text) -> (text);
 }

@@ -10,20 +10,19 @@ mod chat_utils;
 // use crypto::pbkdf2::pbkdf2;
 // use rand_core::{RngCore, OsRng};
 // use rand::Rng;
-
 #[update(name = "CreateGroup")]
-pub async fn create_group(id: String, group_id: String, group_name: String, group_description: Option<String>) -> String {
-    chat_utils::create_group(id, group_id, group_name, group_description).await
+pub async fn create_group(params: chat_utils::CreateGroupParams) -> String {
+    chat_utils::create_group(params).await
 }
 
 #[update(name = "JoinGroup")]
-pub async fn join_group(id: String, group_id: String) -> String {
-    chat_utils::join_group(id, group_id).await
+pub async fn join_group(params: chat_utils::JoinGroupParam) -> String {
+    chat_utils::join_group(params).await
 }
 
 #[update(name = "LeaveGroup")]
-pub async fn leave_group(id: String, group_id: String) -> String {
-    chat_utils::leave_group(id, group_id).await
+pub async fn leave_group(params: chat_utils::LeaveGroupParams) -> String {
+    chat_utils::leave_group(params).await
 }
 
 #[query(name = "GetGroupMembers")]
@@ -42,13 +41,13 @@ pub fn get_group_messages(group_id: String) -> Vec<chat_utils::GroupMessage> {
 }
 
 #[update(name = "SendGroupMessage")]
-pub async fn send_group_message(id: String, group_id: String, reply_id: Option<String>, content: String) -> String {
-    chat_utils::send_group_message(id, group_id, reply_id, content).await
+pub async fn send_group_message(params: chat_utils::SendGroupMessageParam) -> String {
+    chat_utils::send_group_message(params).await
 }
 
 #[update(name = "SendDirectMessage")]
-pub async fn send_direct_message(id: String, receiver_id: String, reply_id: Option<String>, content: String) -> String {
-    chat_utils::send_direct_message(id, receiver_id, reply_id, content).await
+pub async fn send_direct_message(params: chat_utils::SendDirectMessageParam) -> String {
+    chat_utils::send_direct_message(params).await
 }
 
 #[update(name = "GetConnectedMembers")]
@@ -57,8 +56,8 @@ pub async fn get_friend_list(id:String) -> Vec<String> {
 }
 
 #[update(name = "GetDirectMessages")]
-pub async fn get_friend_messages(sender_id: String, receiver_id: String) -> Vec<chat_utils::DirectMessage> {
-    chat_utils::get_friend_messages(sender_id, receiver_id).await
+pub async fn get_direct_messages(params: chat_utils::GetDirectMessageParam) -> Vec<chat_utils::DirectMessage> {
+    chat_utils::get_direct_messages(params).await
 }
 
 #[update(name = "ViewMessage")]
