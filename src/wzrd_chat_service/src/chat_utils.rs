@@ -92,7 +92,7 @@ pub async fn create_group(
     params: CreateGroupParams
 ) -> String {
 
-    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (params.user_name.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (params.user_name.clone(),)).await;
     match user_validation {
         Err(_err) => {
             return "Can't access store".to_string();
@@ -132,7 +132,7 @@ pub async fn create_group(
 pub async fn join_group(
     params: JoinGroupParam
 ) -> String {
-    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (params.user_name.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (params.user_name.clone(),)).await;
     match user_validation {
         Err(_err) => {
             return "Can't access store".to_string();
@@ -174,7 +174,7 @@ pub async fn join_group(
 pub async fn leave_group(
     params: LeaveGroupParams
 ) -> String {
-    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (params.user_name.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (params.user_name.clone(),)).await;
     match user_validation {
         Err(_err) => {
             return "Can't access store".to_string();
@@ -222,7 +222,7 @@ pub fn get_group_members(
 pub async fn get_group_list(
     user_name: String
 ) -> Vec<String> {
-    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (user_name.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (user_name.clone(),)).await;
     match user_validation {
         Err(_err) => {
             return vec![];
@@ -257,7 +257,7 @@ pub fn get_group_messages(
 pub async fn send_group_message(
     params: SendGroupMessageParam
 ) -> String {
-    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (params.user_name.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (params.user_name.clone(),)).await;
     match user_validation {
         Err(_err) => {
             return "Can't access store".to_string();
@@ -299,7 +299,7 @@ pub async fn send_group_message(
 pub async fn send_direct_message(
     params: SendDirectMessageParam
 ) -> String {
-    let sender_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (params.sender.clone(),)).await;
+    let sender_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (params.sender.clone(),)).await;
     match sender_validation {
         Err(_err) => {
             return "Can't access store".to_string();
@@ -309,7 +309,7 @@ pub async fn send_direct_message(
             if !id_valid {
                 return "Invalid User ID!".to_string();
             }
-            let receiver_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (params.receiver.clone(),)).await;
+            let receiver_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (params.receiver.clone(),)).await;
             match receiver_validation {
                 Err(_err) => {
                     return "Can't access store".to_string();
@@ -364,7 +364,7 @@ pub async fn send_direct_message(
 pub async fn get_friend_list(
     user_name: String
 ) -> Vec<String> {
-    let sender_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (user_name.clone(),)).await;
+    let sender_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (user_name.clone(),)).await;
     match sender_validation {
         Err(_err) => {
             return vec![];
@@ -384,7 +384,7 @@ pub async fn get_friend_list(
 pub async fn get_direct_messages(
     params: GetDirectMessageParam
 ) -> Vec<DirectMessage> {
-    let sender_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (params.sender.clone(),)).await;
+    let sender_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (params.sender.clone(),)).await;
     match sender_validation {
         Err(_err) => {
             return vec![];
@@ -394,7 +394,7 @@ pub async fn get_direct_messages(
             if !id_valid {
                 return vec![];
             }
-            let receiver_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap(), "CheckUser", (params.receiver.clone(),)).await;
+            let receiver_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (params.receiver.clone(),)).await;
             match receiver_validation {
                 Err(_err) => {
                     return vec![];
@@ -425,14 +425,14 @@ pub async fn get_direct_messages(
 
 pub fn view_message(
     message_id: String
-) -> String {
+) -> bool {
     DIRECT_MESSAGE_STORE.with(|direct_message_store| {
         if let Some(message) = direct_message_store.borrow_mut().iter_mut().find(|message| message.id == message_id){
             message.viewed = true;
-            return "Success!".to_string();
+            true
         }
         else{
-            return "Invalid Message ID!".to_string();
+            false
         }
     })
 }
