@@ -61,6 +61,6 @@ pub async fn get_direct_messages(params: chat_utils::GetDirectMessageParam) -> V
 }
 
 #[update(name = "ViewMessage")]
-pub fn view_message(message_id: String) -> String {
+pub fn view_message(message_id: String) -> bool {
     chat_utils::view_message(message_id)
 }

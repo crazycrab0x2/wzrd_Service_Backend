@@ -55,5 +55,5 @@ service : {
     "SendDirectMessage": (params: SendDirectMessageParam) -> (text);
     "GetConnectedMembers": (text) -> (vec text);
     "GetDirectMessages": (params: GetDirectMessageParam) -> (vec DirectMessage);
-    "ViewMessage": (text) -> (text);
+    "ViewMessage": (text) -> (bool);
 }
