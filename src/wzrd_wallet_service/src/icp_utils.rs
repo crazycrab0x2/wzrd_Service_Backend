@@ -1,6 +1,4 @@
 use sha2::{Digest, Sha256};
-use ic_cdk::update;
-use ic_cdk::api::caller;
 use ic_ledger_types::{AccountIdentifier, Subaccount, transfer, Tokens, Memo, TransferArgs, DEFAULT_FEE, DEFAULT_SUBACCOUNT, AccountBalanceArgs, MAINNET_LEDGER_CANISTER_ID, account_balance};
 use candid::{CandidType, Deserialize};
 
