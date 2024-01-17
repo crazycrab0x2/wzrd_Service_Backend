@@ -96,7 +96,7 @@ pub fn authentication_request(user_name: String) -> AuthenticationRequestData {
     }
 }
 
-pub fn authentication(user_name: String, key_id: String, authenticator_data: String, signature: String) -> bool {
+pub fn authentication(user_name: String, key_id: String, authenticator_data: String, signature: String) -> String {
     KEY_ID_STORE.with(|key_id_store|{
         let user_key_list = key_id_store.borrow().get(&user_name).unwrap_or(&vec![]).clone();
         if user_key_list.contains(&key_id) {
@@ -104,15 +104,15 @@ pub fn authentication(user_name: String, key_id: String, authenticator_data: Str
                 let public_key = public_key_store.borrow().get(&key_id).unwrap().clone();
                 if public_key != "".to_string() {
                     // authorize authenticator_data and signature with stored public_key corresponding with key_id
-                    true
+                    generate_token(user_name, key_id)
                 }
                 else{
-                    false
+                    "".to_string()
                 }
             })
         }
         else{
-            false
+            "".to_string()
         }
     })
 }
@@ -141,9 +141,9 @@ pub fn reverse_timestamp(timestamp: String) -> u64 {
         "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1",
         "2", "3", "4", "5", "6", "7", "8", "9"
     ];
-    let num = 0u64;
+    let mut num = 0u64;
     for (index, c) in timestamp.chars().enumerate() {
-        num += char_set.index(c).unwrap() * (62u64**index);
+        num += (char_set.iter().position(|&x| x.to_string() == c.to_string()).unwrap() as u64) * 62u64.pow(index.clone() as u32);
     }
     num
 }
@@ -160,33 +160,39 @@ pub fn generate_token(user_name: String, key_id: String) -> String {
 
 pub fn check_token(token: String) -> String {
     let key: Hmac<Sha256> = Hmac::new_from_slice(b"wzrd-secret-key").unwrap();
-    let veri_claims: BTreeMap<String, String> = token.as_str().verify_with_key(&key).unwrap();
-    let user_name = veri_claims["username"];
-    let key_id = veri_claims["keyId"];
-    let timestamp_str = veri_claims["timestamp"];
-    let timestamp = reverse_timestamp(timestamp_str);
+    let veri_claims;
+    let result: Result<BTreeMap<String, String>, jwt::Error> = token.as_str().verify_with_key(&key);
+    match result{
+        Ok(okay_result) => veri_claims = okay_result,
+        Err(_) => return "Invalid Token".to_string()
+    };
+    let user_name = &veri_claims["username"];
+    let key_id = &veri_claims["keyId"];
+    let timestamp_str = &veri_claims["timestamp"];
+    let timestamp = reverse_timestamp(timestamp_str.clone());
 
     //check user_name and key_id
     KEY_ID_STORE.with(|key_id_store|{
-        let user_key_list = key_id_store.borrow().get(&user_name).unwrap_or(&vec![]).clone();
-        if !user_key_list.contains(&key_id) {
-            return "".to_string();
+        let user_key_list = key_id_store.borrow().get(user_name).unwrap_or(&vec![]).clone();
+        if !user_key_list.contains(key_id) {
+            return "username".to_string();
         }
-    });
-
-    //check timestamp  it token  is older than 1 hour, return ""
-    //else generate new token with current timestamp
-    if time() - timestamp > 3600000000 {
-        return "".to_string();
-    }
-    else {
-        let mut claims = BTreeMap::new();
-        claims.insert("username", user_name);
-        claims.insert("keyId", key_id);
-        claims.insert("timestamp", get_challenge());
-        let token_str = claims.sign_with_key(&key).unwrap();
-        token_str
-    }
+        else{
+            //check timestamp  it token  is older than 1 hour, return ""
+            //else generate new token with current timestamp
+            if time() - timestamp > 3600000000000 {
+                format!("{:?}, {:?}",time(), timestamp)
+            }
+            else {
+                let mut claims = BTreeMap::new();
+                claims.insert("username", user_name.clone());
+                claims.insert("keyId", key_id.clone());
+                claims.insert("timestamp", get_challenge());
+                let token_str = claims.sign_with_key(&key).unwrap();
+                token_str
+            }
+        }
+    })
 }
 
 pub fn has_user(user_name: &String) -> bool {

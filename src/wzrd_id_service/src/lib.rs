@@ -27,7 +27,7 @@ pub fn authentication_request(user_name: String) -> id_utils::AuthenticationRequ
 }
 
 #[query(name = "Authentication")]
-pub fn authentication(user_name: String, key_id: String, authenticator_data: String, signature: String) -> bool {
+pub fn authentication(user_name: String, key_id: String, authenticator_data: String, signature: String) -> String {
     id_utils::authentication(user_name, key_id, authenticator_data, signature)
 }
 
@@ -35,6 +35,11 @@ pub fn authentication(user_name: String, key_id: String, authenticator_data: Str
 pub fn check_user(user_name: String) -> bool {
     id_utils::has_user(&user_name)
 }
+
+// #[query(name = "CheckToken")]
+// pub fn check_token(token: String) -> String {
+//     id_utils::check_token(token)
+// }
 
 #[query(name = "GetPrincipal")]
 pub fn get_principal() -> String {
