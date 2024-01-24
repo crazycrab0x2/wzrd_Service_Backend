@@ -19,20 +19,20 @@ pub async fn get_btc_address(user_name: String) -> String {
 }
 
 #[update (name = "Get_BTC_Balance")]
-pub async fn get_btc_balance(address: String) -> u64 {
+pub async fn get_btc_balance(request: btc_utils::BalanceRequest) -> btc_utils::BalanceResult {
     let network = NETWORK.with(|n| n.get());
-    btc_utils::get_balance(network, address).await
+    btc_utils::get_balance(network, request).await
 }
 
 #[update (name = "Send_BTC")]
-pub async fn send_btc(request: btc_types::SendRequest) -> String {
-    let derivation_path = vec![request.sender.as_bytes().to_vec()];
+pub async fn send_btc(request: btc_utils::SendRequest) -> String {
     let network = NETWORK.with(|n| n.get());
     let key_name = KEY_NAME.with(|kn| kn.borrow().to_string());
+    let derivation_path = vec![request.token.as_bytes().to_vec()];
     let tx_id = btc_utils::send(
         network,
-        derivation_path,
         key_name,
+        derivation_path,
         request.destination_address,
         request.amount_in_satoshi,
     )
@@ -48,11 +48,11 @@ pub async fn get_icp_address(user_name: String) -> String {
 }
 
 #[update (name = "Get_ICP_Balance")]
-pub async fn get_icp_balance(user_name: String) -> String {
-    icp_utils::get_icp_balance(user_name).await
+pub async fn get_icp_balance(request: icp_utils::BalanceRequest) -> icp_utils::BalanceResult {
+    icp_utils::get_icp_balance(request).await
 }
 
 #[update (name = "Send_ICP")]
-pub async fn send_icp(request: icp_utils::SendRequest) -> String {
+pub async fn send_icp(request: icp_utils::SendRequest) -> icp_utils::SendResult {
     icp_utils::send(request).await
 }

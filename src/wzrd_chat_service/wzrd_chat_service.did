@@ -15,45 +15,51 @@ type DirectMessage = record {
     "viewed": bool;
 };
 type CreateGroupParams = record {
+    "token": text;
     "user_name": text; 
     "group_id": text; 
     "group_name": text; 
     "group_description": opt text;
 };
 type LeaveGroupParams = record {
+    "token": text;
     "user_name": text; 
     "group_id": text;
 };
 type JoinGroupParam = record {
+    "token": text;
     "user_name": text; 
     "group_id": text;
 };
 type SendGroupMessageParam = record {
+    "token": text;
     "user_name": text; 
     "group_id": text; 
     "reply_id": opt text;
     "content": text;
 };
 type SendDirectMessageParam = record {
+    "token": text;
     "sender": text; 
     "receiver": text; 
     "reply_id": opt text;
     "content": text;
 };
 type GetDirectMessageParam = record {
+    "token": text;
     "sender": text; 
     "receiver": text;
 };
 service : {
-    "CreateGroup": (params: CreateGroupParams) -> (text);
-    "JoinGroup": (params: JoinGroupParam) -> (text);
-    "LeaveGroup": (params: LeaveGroupParams) -> (text);
-    "GetGroupMembers": (text) -> (vec text) query;
-    "GetJoinedGroup": (text) -> (vec text);
-    "GetGoupMessage": (text)-> (vec GroupMessage) query;
-    "SendGroupMessage": (params: SendGroupMessageParam) -> (text);
-    "SendDirectMessage": (params: SendDirectMessageParam) -> (text);
-    "GetConnectedMembers": (text) -> (vec text);
-    "GetDirectMessages": (params: GetDirectMessageParam) -> (vec DirectMessage);
-    "ViewMessage": (text) -> (bool);
+    "CreateGroup": (params: CreateGroupParams) -> (record{token: text; result: text;});
+    "JoinGroup": (params: JoinGroupParam) -> (record{token: text; result: text;});
+    "LeaveGroup": (params: LeaveGroupParams) -> (record{token: text; result: text;});
+    "GetGroupMembers": (record{ token: text; group_id: text;}) -> (record{ token: text; result: vec text;}) query;
+    "GetJoinedGroup": (record{ token: text; user_name: text;}) -> (record{ token: text; result: vec text;}) query;
+    "GetGoupMessage": (record{ token: text; group_id: text;})-> (record{ token: text; result: vec GroupMessage;}) query;
+    "SendGroupMessage": (params: SendGroupMessageParam) -> (record{ token: text; result: text;});
+    "SendDirectMessage": (params: SendDirectMessageParam) -> (record{ token: text; result: text;});
+    "GetConnectedMembers": (record{ token: text; user_name: text;}) -> (record{ token: text; result: vec text;}) query;
+    "GetDirectMessages": (params: GetDirectMessageParam) -> (record{ token: text; result: vec DirectMessage;}) query;
+    "ViewMessage": (record{ token: text; msg_id: text;}) -> (record{ token: text; result: bool;});
 }

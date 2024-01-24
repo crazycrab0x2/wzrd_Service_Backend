@@ -34,6 +34,7 @@ pub struct Group {
 
 #[derive(Clone, Debug, Deserialize, CandidType)]
 pub struct CreateGroupParams {
+    pub token: String, 
     pub user_name: String, 
     pub group_id: String, 
     pub group_name: String, 
@@ -41,19 +42,76 @@ pub struct CreateGroupParams {
 }
 
 #[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct CreateGroupResponse {
+    pub token: String, 
+    pub result: String
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
 pub struct LeaveGroupParams {
+    pub token: String, 
     pub user_name: String, 
     pub group_id: String
 }
 
 #[derive(Clone, Debug, Deserialize, CandidType)]
-pub struct JoinGroupParam {
+pub struct LeaveGroupResponse {
+    pub token: String, 
+    pub result: String
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct JoinGroupParams {
+    pub token: String, 
     pub user_name: String, 
     pub group_id: String
 }
 
 #[derive(Clone, Debug, Deserialize, CandidType)]
-pub struct SendGroupMessageParam {
+pub struct JoinGroupResponse {
+    pub token: String, 
+    pub result: String
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct GetGroupMembersParams {
+    pub token: String, 
+    pub group_id: String
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct GetGroupMembersResponse {
+    pub token: String, 
+    pub result: Vec<String>
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct GetJoinedGroupParams {
+    pub token: String, 
+    pub user_name: String
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct GetJoinedGroupResponse {
+    pub token: String, 
+    pub result: Vec<String>
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct GetGroupMessageParams {
+    pub token: String, 
+    pub group_id: String
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct GetGroupMessageResponse {
+    pub token: String, 
+    pub result: Vec<GroupMessage>
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct SendGroupMessageParams {
+    pub token: String, 
     pub user_name: String, 
     pub group_id: String, 
     pub reply_id: Option<String>,
@@ -61,7 +119,14 @@ pub struct SendGroupMessageParam {
 }
 
 #[derive(Clone, Debug, Deserialize, CandidType)]
-pub struct SendDirectMessageParam {
+pub struct SendGroupMessageResponse {
+    pub token: String, 
+    pub result: String
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct SendDirectMessageParams {
+    pub token: String, 
     pub sender: String, 
     pub receiver: String, 
     pub reply_id: Option<String>,
@@ -69,9 +134,46 @@ pub struct SendDirectMessageParam {
 }
 
 #[derive(Clone, Debug, Deserialize, CandidType)]
-pub struct GetDirectMessageParam {
+pub struct SendDirectMessageResponse {
+    pub token: String, 
+    pub result: String
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct GetConnectedMemberParams {
+    pub token: String, 
+    pub user_name: String
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct GetConnectedMemberResponse {
+    pub token: String, 
+    pub result: Vec<String>
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct GetDirectMessageParams {
+    pub token: String, 
     pub sender: String, 
     pub receiver: String
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct GetDirectMessageResponse {
+    pub token: String, 
+    pub result: Vec<DirectMessage>
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct ViewMessageParams {
+    pub token: String, 
+    pub msg_id: String
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct ViewMessageResponse {
+    pub token: String, 
+    pub result: bool
 }
 
 type GroupMessageStore = BTreeMap<String, Vec<GroupMessage>>;
@@ -90,20 +192,27 @@ thread_local! {
 
 pub async fn create_group(
     params: CreateGroupParams
-) -> String {
-
-    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (params.user_name.clone(),)).await;
+) -> CreateGroupResponse {
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckToken", (params.token,)).await;
     match user_validation {
         Err(_err) => {
-            return "Can't access store".to_string();
+            CreateGroupResponse {
+                token: "".to_string(),
+                result: "Can't access ID service".to_string()
+            }
         }
-        Ok(result) => {
-            let (id_valid,): (bool,) = result;
-            if !id_valid {
-                return "Invalid User ID!".to_string();
+        Ok((token,)) => {
+            if token == "".to_string() {
+                return CreateGroupResponse {
+                    token,
+                    result: "Invalid token".to_string()
+                };
             }
             if has_group_id(params.group_id.clone()) {
-                return "Group ID Alreay Exist".to_string();
+                return CreateGroupResponse {
+                    token,
+                    result: "Group ID Alreay Exist".to_string()
+                };
             }
             GROUP_STORE.with(|group_store| {
                 let new_group = Group{
@@ -124,26 +233,37 @@ pub async fn create_group(
                 new_group_list.push(params.group_id);
                 user_group_store.borrow_mut().insert(params.user_name, new_group_list);
             });
-            "Success!".to_string()
+            CreateGroupResponse {
+                token,
+                result: "Success".to_string()
+            }
         }
     }    
 }
 
 pub async fn join_group(
-    params: JoinGroupParam
-) -> String {
-    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (params.user_name.clone(),)).await;
+    params: JoinGroupParams
+) -> JoinGroupResponse {
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
     match user_validation {
         Err(_err) => {
-            return "Can't access store".to_string();
+            JoinGroupResponse{
+                token: "".to_string(),
+                result: "Can't access ID service".to_string()
+            }
         }
-        Ok(result) => {
-            let (id_valid,): (bool,) = result;
-            if !id_valid {
-                return "Invalid User ID!".to_string();
+        Ok((token,)) => {
+            if token == "".to_string() {
+                return JoinGroupResponse{
+                    token,
+                    result: "Invalid token".to_string()
+                };
             }
             if !has_group_id(params.group_id.clone()) {
-                return "Invalid Group ID".to_string();
+                return JoinGroupResponse{
+                    token,
+                    result: "Group ID doesn't exist".to_string()
+                };
             }
             GROUP_STORE.with(|group_store| {
                 if let Some(group) = group_store.borrow_mut().iter_mut().find(|group| *group.group_id == params.group_id){
@@ -166,26 +286,37 @@ pub async fn join_group(
                 }
                 user_group_store.borrow_mut().insert(params.user_name, new_group_list);
             });
-            "Success!".to_string()
+            JoinGroupResponse{
+                token,
+                result: "Success".to_string()
+            }
         }
     }
 }
 
 pub async fn leave_group(
     params: LeaveGroupParams
-) -> String {
-    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (params.user_name.clone(),)).await;
+) -> LeaveGroupResponse {
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
     match user_validation {
         Err(_err) => {
-            return "Can't access store".to_string();
+            return LeaveGroupResponse{
+                token: "".to_string(),
+                result: "Can't access ID service".to_string()
+            };
         }
-        Ok(result) => {
-            let (id_valid,): (bool,) = result;
-            if !id_valid {
-                return "Invalid User ID!".to_string();
+        Ok((token,)) => {
+            if token == "".to_string() {
+                return LeaveGroupResponse{
+                    token,
+                    result: "Invalid token".to_string()
+                };
             }
             if !has_group_id(params.group_id.clone()) {
-                return "Invalid Group ID".to_string();
+                return LeaveGroupResponse{
+                    token,
+                    result: "Group ID doesn't exist".to_string()
+                };
             }
             GROUP_STORE.with(|group_store| {
                 if let Some(group) = group_store.borrow_mut().iter_mut().find(|group| *group.group_id == params.group_id){
@@ -202,243 +333,359 @@ pub async fn leave_group(
                     user_group_store.borrow_mut().insert(params.user_name, new_group_list);
                 }
             });
-            "Success!".to_string()
+            LeaveGroupResponse{
+                token,
+                result: "Success".to_string()
+            }
         }
     }
 }                                      
 
-pub fn get_group_members(
-    group_id: String
-) -> Vec<String> {
-    let res = has_group_id(group_id.clone());
-    if !res {
-        return vec![];
-    }
-    GROUP_STORE.with(|group_store| {
-        group_store.borrow().iter().find(|&group| *group.group_id == group_id).unwrap().clone().group_members
-    })
-}
-
-pub async fn get_group_list(
-    user_name: String
-) -> Vec<String> {
-    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (user_name.clone(),)).await;
+pub async fn get_group_members(params: GetGroupMembersParams) -> GetGroupMembersResponse {
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
     match user_validation {
         Err(_err) => {
-            return vec![];
+            return GetGroupMembersResponse{
+                token: "".to_string(),
+                result: [].to_vec()
+            };
         }
-        Ok(result) => {
-            let (id_valid,): (bool,) = result;
-            if !id_valid {
-                return vec![];
-            }
-            USER_GROUP_STORE.with(|user_group_store| {
-                user_group_store.borrow().get(&user_name).unwrap_or(&vec![]).clone()
-            })
-        }
-    }
-}
-
-pub fn get_group_messages(
-    group_id: String
-) -> Vec<GroupMessage> {
-    let res = has_group_id(group_id.clone());
-    if !res {
-        vec![]
-    }
-    else{
-        GROUP_MESSAGE_STORE.with(|group_message_store| {
-            let empty = vec![];
-            group_message_store.borrow().get(&group_id).unwrap_or(&empty).clone()
-        })
-    }
-}
-
-pub async fn send_group_message(
-    params: SendGroupMessageParam
-) -> String {
-    let user_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (params.user_name.clone(),)).await;
-    match user_validation {
-        Err(_err) => {
-            return "Can't access store".to_string();
-        }
-        Ok(result) => {
-            let (id_valid,): (bool,) = result;
-            if !id_valid {
-                return "Invalid User ID!".to_string();
-            } 
-            if !has_group_id(params.group_id.clone()) {
-                return "Invalid Group ID".to_string();
-            }
-            GROUP_MESSAGE_STORE.with(|group_message_store| {
-                let mut new_message_list;
-                let message_id;
-                if group_message_store.borrow().get(&params.group_id).is_none() {
-                    new_message_list = vec![];
-                    message_id = 0;
-                }
-                else{
-                    new_message_list = group_message_store.borrow().get(&params.group_id).unwrap().clone();
-                    message_id = new_message_list.len();
-                }
-                let message = GroupMessage { 
-                    id: message_id.to_string(), 
-                    sender_id: params.user_name, 
-                    reply_id: params.reply_id,
-                    content: params.content, 
-                    timestamp: (time()/1000000).to_string()
+        Ok((token,)) => {
+            if token == "".to_string() {
+                return GetGroupMembersResponse{
+                    token,
+                    result: [].to_vec()
                 };
-                new_message_list.push(message);
-                group_message_store.borrow_mut().insert(params.group_id, new_message_list);
-            });
-            "Success!".to_string()
-        }
-    }
-}
-
-pub async fn send_direct_message(
-    params: SendDirectMessageParam
-) -> String {
-    let sender_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (params.sender.clone(),)).await;
-    match sender_validation {
-        Err(_err) => {
-            return "Can't access store".to_string();
-        }
-        Ok(result) => {
-            let (id_valid,): (bool,) = result;
-            if !id_valid {
-                return "Invalid User ID!".to_string();
             }
-            let receiver_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (params.receiver.clone(),)).await;
-            match receiver_validation {
-                Err(_err) => {
-                    return "Can't access store".to_string();
+            if !has_group_id(params.group_id.clone()) {
+                return GetGroupMembersResponse{
+                    token,
+                    result: [].to_vec()
+                };
+            }
+            GROUP_STORE.with(|group_store| {
+                let result = group_store.borrow().iter().find(|&group| *group.group_id == params.group_id).unwrap().clone().group_members;
+                GetGroupMembersResponse{
+                    token,
+                    result
                 }
-                Ok(result) => {
-                    let (id_valid,): (bool,) = result;
-                    if !id_valid {
-                        return "Invalid User ID!".to_string();
-                    }
-                    DIRECT_MESSAGE_STORE.with(|direct_message_store| {
-                        let message = DirectMessage { 
-                            id: direct_message_store.borrow().clone().len().to_string(), 
-                            sender_id: params.sender.clone(), 
-                            receiver_id: params.receiver.clone(), 
-                            reply_id: params.reply_id,
-                            content: params.content, 
-                            timestamp: (time()/1000000).to_string(), 
-                            viewed: false 
-                        };
-                        direct_message_store.borrow_mut().push(message);
-                    });
-                    USER_FRIEND_STORE.with(|user_friend_store| {
-                        let mut sender_friend_list;
-                        let mut receiver_friend_list;
-                        if user_friend_store.borrow().get(&params.sender).is_none() {
-                            sender_friend_list = vec![];
-                        } else {
-                            sender_friend_list = user_friend_store.borrow().get(&params.sender).unwrap().clone();
-                        }
-                        if !sender_friend_list.iter().find(|&id| *id == params.receiver).is_some(){
-                            sender_friend_list.push(params.receiver.clone());
-                        }
-                        user_friend_store.borrow_mut().insert(params.sender.clone(), sender_friend_list);
-
-                        if user_friend_store.borrow().get(&params.receiver).is_none() {
-                            receiver_friend_list = vec![];
-                        } else {
-                            receiver_friend_list = user_friend_store.borrow().get(&params.receiver).unwrap().clone();
-                        }
-                        if !receiver_friend_list.iter().find(|&id| *id == params.sender).is_some(){
-                            receiver_friend_list.push(params.sender);
-                        }
-                        user_friend_store.borrow_mut().insert(params.receiver, receiver_friend_list);
-                    });
-                    "Success!".to_string()
-                }
-            }
-        }
-    }
-}
-
-pub async fn get_friend_list(
-    user_name: String
-) -> Vec<String> {
-    let sender_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (user_name.clone(),)).await;
-    match sender_validation {
-        Err(_err) => {
-            return vec![];
-        }
-        Ok(result) => {
-            let (id_valid,): (bool,) = result;
-            if !id_valid {
-                return vec![];
-            }
-            USER_FRIEND_STORE.with(|user_friend_store| {
-                user_friend_store.borrow().get(&user_name).unwrap_or(&vec![]).clone()
             })
+        }
+    }
+}
+
+pub async fn get_group_list(params: GetJoinedGroupParams) -> GetJoinedGroupResponse {
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
+    match user_validation {
+        Err(_err) => {
+            GetJoinedGroupResponse{
+                token: "".to_string(),
+                result: [].to_vec()
+            }
+        }
+        Ok((token,)) => {
+            if token == "".to_string() {
+                GetJoinedGroupResponse{
+                    token,
+                    result: [].to_vec()
+                }
+            }
+            else{
+                USER_GROUP_STORE.with(|user_group_store| {
+                    let result = user_group_store.borrow().get(&params.user_name).unwrap_or(&vec![]).clone();
+                    GetJoinedGroupResponse{
+                        token,
+                        result
+                    }
+                })
+            }
+        }
+    }
+}
+
+pub async fn get_group_messages(params: GetGroupMessageParams) -> GetGroupMessageResponse {
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
+    match user_validation {
+        Err(_err) => {
+            GetGroupMessageResponse{
+                token: "".to_string(),
+                result: [].to_vec()
+            }
+        }
+        Ok((token,)) => {
+            if token == "".to_string() {
+                GetGroupMessageResponse{
+                    token,
+                    result: [].to_vec()
+                }
+            }
+            else{
+                GROUP_MESSAGE_STORE.with(|group_message_store| {
+                    let result = group_message_store.borrow().get(&params.group_id).unwrap_or(&vec![]).clone();
+                    GetGroupMessageResponse{
+                        token,
+                        result
+                    }
+                })
+            }
+        }
+    }
+}
+
+pub async fn send_group_message(params: SendGroupMessageParams) -> SendGroupMessageResponse {
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
+    match user_validation {
+        Err(_err) => {
+            SendGroupMessageResponse{
+                token: "".to_string(),
+                result: "Can't access ID service".to_string()
+            }
+        }
+        Ok((token,)) => {
+            if token == "".to_string() {
+                SendGroupMessageResponse{
+                    token,
+                    result: "Invalid token".to_string()
+                }
+            }
+            else{
+                GROUP_MESSAGE_STORE.with(|group_message_store| {
+                    let mut new_message_list;
+                    let message_id;
+                    if group_message_store.borrow().get(&params.group_id).is_none() {
+                        new_message_list = vec![];
+                        message_id = 0;
+                    }
+                    else{
+                        new_message_list = group_message_store.borrow().get(&params.group_id).unwrap().clone();
+                        message_id = new_message_list.len();
+                    }
+                    let message = GroupMessage { 
+                        id: message_id.to_string(), 
+                        sender_id: params.user_name, 
+                        reply_id: params.reply_id,
+                        content: params.content, 
+                        timestamp: (time()/1000000).to_string()
+                    };
+                    new_message_list.push(message);
+                    group_message_store.borrow_mut().insert(params.group_id, new_message_list);
+                });
+                SendGroupMessageResponse{
+                    token,
+                    result: "Success".to_string()
+                }
+            }
+        }
+    }
+}
+
+pub async fn send_direct_message(params: SendDirectMessageParams) -> SendDirectMessageResponse {
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
+    match user_validation {
+        Err(_err) => {
+            SendDirectMessageResponse{
+                token: "".to_string(),
+                result: "Can't access ID service".to_string()
+            }
+        }
+        Ok((token,)) => {
+            if token == "".to_string() {
+                SendDirectMessageResponse{
+                    token,
+                    result: "Invalid token".to_string()
+                }
+            }
+            else{
+                let receiver_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (params.receiver.clone(),)).await;
+                match receiver_validation {
+                    Err(_err) => {
+                        SendDirectMessageResponse{
+                            token,
+                            result: "Can't access ID service".to_string()
+                        }
+                    }
+                    Ok((id_valid,)) => {
+                        if !id_valid {
+                            SendDirectMessageResponse{
+                                token,
+                                result: "Invalid receiver id".to_string()
+                            }
+                        }
+                        else{
+                            DIRECT_MESSAGE_STORE.with(|direct_message_store| {
+                                let message = DirectMessage { 
+                                    id: direct_message_store.borrow().clone().len().to_string(), 
+                                    sender_id: params.sender.clone(), 
+                                    receiver_id: params.receiver.clone(), 
+                                    reply_id: params.reply_id,
+                                    content: params.content, 
+                                    timestamp: (time()/1000000).to_string(), 
+                                    viewed: false 
+                                };
+                                direct_message_store.borrow_mut().push(message);
+                            });
+                            USER_FRIEND_STORE.with(|user_friend_store| {
+                                let mut sender_friend_list;
+                                let mut receiver_friend_list;
+                                if user_friend_store.borrow().get(&params.sender).is_none() {
+                                    sender_friend_list = vec![];
+                                } else {
+                                    sender_friend_list = user_friend_store.borrow().get(&params.sender).unwrap().clone();
+                                }
+                                if !sender_friend_list.iter().find(|&id| *id == params.receiver).is_some(){
+                                    sender_friend_list.push(params.receiver.clone());
+                                }
+                                user_friend_store.borrow_mut().insert(params.sender.clone(), sender_friend_list);
+
+                                if user_friend_store.borrow().get(&params.receiver).is_none() {
+                                    receiver_friend_list = vec![];
+                                } else {
+                                    receiver_friend_list = user_friend_store.borrow().get(&params.receiver).unwrap().clone();
+                                }
+                                if !receiver_friend_list.iter().find(|&id| *id == params.sender).is_some(){
+                                    receiver_friend_list.push(params.sender);
+                                }
+                                user_friend_store.borrow_mut().insert(params.receiver, receiver_friend_list);
+                            });
+                            SendDirectMessageResponse{
+                                token,
+                                result: "Success".to_string()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub async fn get_friend_list(params: GetConnectedMemberParams) -> GetConnectedMemberResponse {
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
+    match user_validation {
+        Err(_err) => {
+            GetConnectedMemberResponse{
+                token: "".to_string(),
+                result: [].to_vec()
+            }
+        }
+        Ok((token,)) => {
+            if token == "".to_string() {
+                GetConnectedMemberResponse{
+                    token,
+                    result: [].to_vec()
+                }
+            }
+            else{
+                USER_FRIEND_STORE.with(|user_friend_store| {
+                    let result = user_friend_store.borrow().get(&params.user_name).unwrap_or(&vec![]).clone();
+                    GetConnectedMemberResponse{
+                        token,
+                        result
+                    }
+                })
+            }
         }
     }
 }
 
 pub async fn get_direct_messages(
-    params: GetDirectMessageParam
-) -> Vec<DirectMessage> {
-    let sender_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (params.sender.clone(),)).await;
-    match sender_validation {
+    params: GetDirectMessageParams
+) -> GetDirectMessageResponse{
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
+    match user_validation {
         Err(_err) => {
-            return vec![];
-        }
-        Ok(result) => {
-            let (id_valid,): (bool,) = result;
-            if !id_valid {
-                return vec![];
+            GetDirectMessageResponse{
+                token: "".to_string(),
+                result: [].to_vec()
             }
-            let receiver_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (params.receiver.clone(),)).await;
-            match receiver_validation {
-                Err(_err) => {
-                    return vec![];
+        }
+        Ok((token,)) => {
+            if token == "".to_string() {
+                GetDirectMessageResponse{
+                    token,
+                    result: [].to_vec()
                 }
-                Ok(result) => {
-                    let (id_valid,): (bool,) = result;
-                    if !id_valid {
-                        return vec![];
+            }
+            else{
+                let receiver_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckUser", (params.receiver.clone(),)).await;
+                match receiver_validation {
+                    Err(_err) => {
+                        GetDirectMessageResponse{
+                            token,
+                            result: [].to_vec()
+                        }
                     }
-                    // user friend store...
-                    DIRECT_MESSAGE_STORE.with(|direct_message_store| {
-                        let dms = direct_message_store.borrow().clone();
-                        dms.iter().filter(|&message| 
-                            message.sender_id == params.sender && 
-                            message.receiver_id == params.receiver || 
-                            message.sender_id == params.receiver && 
-                            message.receiver_id == params.sender)
-                        .map(|msg|{
-                            let tmp = msg.clone();
-                            tmp
-                        }).collect()
-                    })
+                    Ok((id_valid,)) => {
+                        if !id_valid {
+                            GetDirectMessageResponse{
+                                token,
+                                result: [].to_vec()
+                            }
+                        }
+                        else{                        
+                            DIRECT_MESSAGE_STORE.with(|direct_message_store| {
+                                let dms = direct_message_store.borrow().clone();
+                                let result: Vec<DirectMessage> = dms.iter().filter(|&message| 
+                                    message.sender_id == params.sender && 
+                                    message.receiver_id == params.receiver || 
+                                    message.sender_id == params.receiver && 
+                                    message.receiver_id == params.sender)
+                                .map(|msg|{
+                                    let tmp = msg.clone();
+                                    tmp
+                                }).collect();
+                                GetDirectMessageResponse{
+                                    token,
+                                    result
+                                }
+                            })
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-pub fn view_message(
-    message_id: String
-) -> bool {
-    DIRECT_MESSAGE_STORE.with(|direct_message_store| {
-        if let Some(message) = direct_message_store.borrow_mut().iter_mut().find(|message| message.id == message_id){
-            message.viewed = true;
-            true
+pub async fn view_message(params: ViewMessageParams) -> ViewMessageResponse {
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
+    match user_validation {
+        Err(_err) => {
+            ViewMessageResponse{
+                token: "".to_string(),
+                result: false
+            }
         }
-        else{
-            false
+        Ok((token,)) => {
+            if token == "".to_string() {
+                ViewMessageResponse{
+                    token,
+                    result: false
+                }
+            }
+            else{
+                DIRECT_MESSAGE_STORE.with(|direct_message_store| {
+                    if let Some(message) = direct_message_store.borrow_mut().iter_mut().find(|message| message.id == params.msg_id){
+                        message.viewed = true;
+                        ViewMessageResponse{
+                            token,
+                            result: true
+                        }
+                    }
+                    else{
+                        ViewMessageResponse{
+                            token,
+                            result: false
+                        }
+                    }
+                })
+            }
         }
-    })
+    }
 }
 
 
-pub fn has_group_id(
+fn has_group_id(
     id: String
 ) -> bool {
     GROUP_STORE.with(|group_store| {

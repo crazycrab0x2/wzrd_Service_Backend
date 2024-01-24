@@ -12,23 +12,23 @@ mod id_utils;
 // use rand::Rng;
 
 #[query(name = "RegisterRequest")]
-pub fn register_request(user_name: String) -> id_utils::RegisterRequestData {
+pub fn register_request(user_name: String) -> String {
     id_utils::register_request(user_name)
 }
 
 #[update(name = "Register")]
-pub fn register(user_name: String, key_id: String, public_key: String) -> bool {
-    id_utils::register(user_name, key_id, public_key)
+pub fn register(params: id_utils::RegisterParams) -> String {
+    id_utils::register(params)
 }
 
 #[query(name = "AuthenticationRequest")]
-pub fn authentication_request(user_name: String) -> id_utils::AuthenticationRequestData {
+pub fn authentication_request(user_name: String) -> String {
     id_utils::authentication_request(user_name)
 }
 
 #[query(name = "Authentication")]
-pub fn authentication(user_name: String, key_id: String, authenticator_data: String, signature: String) -> String {
-    id_utils::authentication(user_name, key_id, authenticator_data, signature)
+pub fn authentication(params: id_utils::AuthenticationParams) -> String {
+    id_utils::authentication(params)
 }
 
 #[query(name = "CheckUser")]
@@ -36,10 +36,10 @@ pub fn check_user(user_name: String) -> bool {
     id_utils::has_user(&user_name)
 }
 
-// #[query(name = "CheckToken")]
-// pub fn check_token(token: String) -> String {
-//     id_utils::check_token(token)
-// }
+#[query(name = "CheckToken")]
+pub fn check_token(token: String) -> String {
+    id_utils::check_token(token)
+}
 
 #[query(name = "GetPrincipal")]
 pub fn get_principal() -> String {
@@ -52,6 +52,6 @@ pub fn get_profile(user_name: String) -> id_utils::Profile {
 }
 
 #[update(name = "SetProfile")]
-pub fn set_profile(user_name: String, first_name: Option<String>, last_name: Option<String>, email_address: Option<String>, phone_number: Option<String>) -> bool {
-    id_utils::set_profile(user_name, first_name, last_name, email_address, phone_number)
+pub fn set_profile(params: id_utils::SetProfileParams) -> bool {
+    id_utils::set_profile(params)
 }

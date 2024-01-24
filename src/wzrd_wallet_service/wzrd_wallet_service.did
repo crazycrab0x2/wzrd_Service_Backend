@@ -1,17 +1,40 @@
 
 service : {
     "Get_BTC_Address": (user_name: text) -> (text);
-    "Get_BTC_Balance": (btc_address: text) -> (nat64);
+
+    "Get_BTC_Balance": (record {
+      token: text;
+      address: text; 
+    }) -> (record {
+      balance: text;
+      token: text;
+    });
+
     "Send_BTC": (record {
-      sender: text;
+      token: text;
       destination_address: text;
       amount_in_satoshi: nat64;
-    }) -> (text);
+    }) -> (record {
+      tx_id: text;
+      token: text;
+    });
+
     "Get_ICP_Address": (user_name: text) -> (text);
-    "Get_ICP_Balance": (address: text) -> (text);
+
+    "Get_ICP_Balance": (record{
+      token: text;
+      address: text;
+    }) -> (record {
+      balance: text;
+      token: text;
+    });
+
     "Send_ICP":(record {
-      sender: text;
+      token: text;
       destination_address: text;
       amount_in_e8s: nat64;
-    }) -> (text);
+    }) -> (record {
+      block_index: text;
+      token: text;
+    });
 }

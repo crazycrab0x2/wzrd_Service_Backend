@@ -1,118 +1,109 @@
 use ic_cdk::api::time;
 use ic_cdk::export::candid::CandidType;
-use std::{cell::RefCell, ops::Index};
+use std::cell::RefCell;
 use std::collections::BTreeMap;
 use hmac::{Hmac, Mac};
 use jwt::{SignWithKey, VerifyWithKey};
 use sha2::Sha256;
+use candid::Deserialize;
 
-#[derive(Clone, Debug, Default, CandidType)]
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct RegisterParams{
+    pub user_name: String,
+    pub key_id: String,
+    pub public_key: String
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct AuthenticationParams {
+    pub user_name: String,
+    pub key_id: String,
+    pub signature: String,
+    pub authenticator_data: String
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
 pub struct Profile {
-    pub phone_number: Option<String>,
-    pub email_address: Option<String>,
+    pub phone: Option<String>,
+    pub email: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
 }
 
-#[derive(Clone, Debug, Default, CandidType)]
-pub struct RegisterRequestData {
-    pub challenge: String,
-    pub exclude_credentials: Vec<String>,
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct FidoKey {
+    pub key_id: String,
+    pub public_key: String,
 }
 
-#[derive(Clone, Debug, Default, CandidType)]
-pub struct AuthenticationRequestData {
-    pub challenge: String,
-    pub allow_credentials: Vec<String>,
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct SetProfileParams {
+    pub user_name: String,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub email: Option<String>,
+    pub phone: Option<String>
 }
 
-type KeyIdStore = BTreeMap<String, Vec<String>>; //(user_name => vec<key_id>)
-type PublicKeyStore = BTreeMap<String, String>; //(key_id => public_key)
-type ProfileStore = BTreeMap<String, Profile>;  //(user_name => profile)
+type KeyStore = BTreeMap<String, FidoKey>; //(user_name => vec<key_id>)
+type ProfileStore = BTreeMap<String, Profile>; //(user_name => vec<key_id>)
 
 thread_local! {
-    pub static KEY_ID_STORE: RefCell<KeyIdStore> = RefCell::default();
-    pub static PUBLIC_KEY_STORE: RefCell<PublicKeyStore> = RefCell::default();
+    pub static KEY_STORE: RefCell<KeyStore> = RefCell::default();
     pub static PROFILE_STORE: RefCell<ProfileStore> = RefCell::default();
 }
 
-
-
-pub fn register_request(user_name: String) -> RegisterRequestData {
-    KEY_ID_STORE.with(|key_id_store| {
-        let credential_list = key_id_store
-            .borrow()
-            .get(&user_name)
-            .unwrap_or(&vec![])
-            .clone();
-        RegisterRequestData {
-            challenge: get_challenge(),
-            exclude_credentials: credential_list,
-        }
-    })
-}
-
-pub fn register(user_name: String, key_id: String, public_key: String) -> bool {
-    KEY_ID_STORE.with(|key_id_store| {
-        let mut key_id_list = key_id_store
-            .borrow()
-            .get(&user_name)
-            .unwrap_or(&vec![])
-            .clone();
-        if key_id_list.contains(&key_id) {
-            false
-        } else {
-            key_id_list.push(key_id.clone());
-            key_id_store.borrow_mut().insert(user_name, key_id_list);
-            PUBLIC_KEY_STORE.with(|public_key_store| {
-                public_key_store.borrow_mut().insert(key_id, public_key);
-            });
-            true
-        }
-    })
-}
-
-pub fn authentication_request(user_name: String) -> AuthenticationRequestData {
-    if user_name == "".to_string() {
-        AuthenticationRequestData {
-            challenge: get_challenge(),
-            allow_credentials: vec![],
-        }
-    } 
-    else {
-        KEY_ID_STORE.with(|key_id_store| {
-            if !key_id_store.borrow().get(&user_name).is_some() {
-                AuthenticationRequestData {
-                    challenge: "".to_string(),
-                    allow_credentials: vec![],
-                }
-            } else {
-                AuthenticationRequestData {
-                    challenge: get_challenge(),
-                    allow_credentials: key_id_store.borrow().get(&user_name).unwrap().clone(),
-                }
-            }
-        })
-    }
-}
-
-pub fn authentication(user_name: String, key_id: String, authenticator_data: String, signature: String) -> String {
-    KEY_ID_STORE.with(|key_id_store|{
-        let user_key_list = key_id_store.borrow().get(&user_name).unwrap_or(&vec![]).clone();
-        if user_key_list.contains(&key_id) {
-            PUBLIC_KEY_STORE.with(|public_key_store| {
-                let public_key = public_key_store.borrow().get(&key_id).unwrap().clone();
-                if public_key != "".to_string() {
-                    // authorize authenticator_data and signature with stored public_key corresponding with key_id
-                    generate_token(user_name, key_id)
-                }
-                else{
-                    "".to_string()
-                }
-            })
+pub fn register_request(username: String) -> String {
+    KEY_STORE.with( |key_store| {
+        if key_store.borrow().get(&username).is_some() {
+            "Username already registered.".to_string()
         }
         else{
-            "".to_string()
+            get_challenge()
+        }
+    })
+}
+
+pub fn register(params: RegisterParams) -> String {
+    KEY_STORE.with( |key_store| {
+        if key_store.borrow().get(&params.user_name).is_some() {
+            "Username already registered.".to_string()
+        }
+        else{
+            let new_key = FidoKey{
+                key_id: params.key_id,
+                public_key: params.public_key
+            };
+            key_store.borrow_mut().insert(params.user_name, new_key);
+            "Success.".to_string()
+        }
+    })
+}
+
+pub fn authentication_request(user_name: String) -> String {
+    KEY_STORE.with( |key_store| {
+        if key_store.borrow().get(&user_name).is_some() {
+            get_challenge()
+        }
+        else{
+            "Username not registered.".to_string()
+        }
+    })
+}
+
+pub fn authentication(params: AuthenticationParams) -> String {
+    KEY_STORE.with( |key_store| {
+        if key_store.borrow().get(&params.user_name).is_some() {
+            let key = key_store.borrow().get(&params.user_name).unwrap().clone();
+            if key.key_id == params.key_id {
+                generate_token(params.user_name, params.key_id)
+            }
+            else{
+                "Authentication failed.".to_string()
+            }
+        }
+        else{
+            "Username not registered.".to_string()
         }
     })
 }
@@ -164,66 +155,64 @@ pub fn check_token(token: String) -> String {
     let result: Result<BTreeMap<String, String>, jwt::Error> = token.as_str().verify_with_key(&key);
     match result{
         Ok(okay_result) => veri_claims = okay_result,
-        Err(_) => return "Invalid Token".to_string()
+        Err(_) => return "".to_string()
     };
     let user_name = &veri_claims["username"];
     let key_id = &veri_claims["keyId"];
     let timestamp_str = &veri_claims["timestamp"];
     let timestamp = reverse_timestamp(timestamp_str.clone());
 
-    //check user_name and key_id
-    KEY_ID_STORE.with(|key_id_store|{
-        let user_key_list = key_id_store.borrow().get(user_name).unwrap_or(&vec![]).clone();
-        if !user_key_list.contains(key_id) {
-            return "username".to_string();
-        }
-        else{
-            //check timestamp  it token  is older than 1 hour, return ""
-            //else generate new token with current timestamp
-            if time() - timestamp > 3600000000000 {
-                format!("{:?}, {:?}",time(), timestamp)
+    if time() - timestamp > 3600000000000 {
+        "".to_string()
+    }
+    else{
+        KEY_STORE.with( |key_store| {
+            if key_store.borrow().get(user_name).is_some() {
+                let key = key_store.borrow().get(user_name).unwrap().clone();
+                if key.key_id == *key_id {
+                    generate_token(user_name.clone(), key_id.clone())
+                }
+                else{
+                    "".to_string()
+                }
             }
-            else {
-                let mut claims = BTreeMap::new();
-                claims.insert("username", user_name.clone());
-                claims.insert("keyId", key_id.clone());
-                claims.insert("timestamp", get_challenge());
-                let token_str = claims.sign_with_key(&key).unwrap();
-                token_str
+            else{
+                "".to_string()
             }
-        }
-    })
+        })
+    }
 }
 
 pub fn has_user(user_name: &String) -> bool {
-    KEY_ID_STORE.with(|key_id_store| key_id_store.borrow().get(user_name).is_some())
+    KEY_STORE.with(|key_store| key_store.borrow().get(user_name).is_some())
 }
 
-pub fn set_profile(
-    user_name: String,
-    first_name: Option<String>,
-    last_name: Option<String>,
-    phone_number: Option<String>,
-    email_address: Option<String>,
-) -> bool {
-    let profile = Profile {
-        first_name,
-        last_name,
-        phone_number,
-        email_address,
-    };
-    PROFILE_STORE.with(|profile_store| {
-        profile_store.borrow_mut().insert(user_name, profile);
-    });
-    true
+pub fn set_profile(params: SetProfileParams) -> bool {
+    KEY_STORE.with( |key_store| {
+        if key_store.borrow().get(&params.user_name).is_some() {
+            let profile = Profile {
+                first_name: params.first_name,
+                last_name: params.last_name,
+                phone: params.phone,
+                email: params.email,
+            };
+            PROFILE_STORE.with(|profile_store| {
+                profile_store.borrow_mut().insert(params.user_name, profile);
+            });
+            true
+        }
+        else{
+            false
+        }
+    })
 }
 
 pub fn get_profile(user_name: String) -> Profile {
     let none_profile = Profile {
         first_name: None,
         last_name: None,
-        phone_number: None,
-        email_address: None,
+        phone: None,
+        email: None,
     };
     PROFILE_STORE.with(|profile_store| {
         profile_store
