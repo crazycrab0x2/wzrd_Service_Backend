@@ -29,11 +29,11 @@ use bitcoin::{
 use sha2::Digest;
 use std::str::FromStr;
 use crate::btc_types::*;
-use candid::Principal;
 use ic_cdk::{
     api::call::call_with_payment, 
     call
 };
+use candid::{CandidType, Deserialize, Principal};
 
 const SIGN_WITH_ECDSA_COST_CYCLES: u64 = 10_000_000_000;
 const SIG_HASH_TYPE: EcdsaSighashType = EcdsaSighashType::All;
@@ -43,77 +43,114 @@ const GET_UTXOS_COST_CYCLES: u64 = 10_000_000_000;
 const SEND_TRANSACTION_BASE_CYCLES: u64 = 5_000_000_000;
 const SEND_TRANSACTION_PER_BYTE_CYCLES: u64 = 20_000_000;
 
+
+#[derive(CandidType, Clone, Debug, Deserialize)]
+pub struct BalanceRequest {
+    pub token: String,
+    pub address: String
+}
+
+#[derive(CandidType, Clone, Debug, Deserialize)]
+pub struct BalanceResult {
+    pub token: String,
+    pub balance: String
+}
+
+#[derive(CandidType, Clone, Debug, Deserialize)]
+pub struct SendRequest {
+    pub token: String,
+    pub destination_address: String,
+    pub amount_in_satoshi: u64,
+}
+
+#[derive(CandidType, Clone, Debug, Deserialize)]
+pub struct SendResult {
+    pub token: String,
+    pub tx_id: String
+}
+
 pub async fn get_btc_address (network: BitcoinNetwork, key_name: String, user_name: String) -> String {
-    let public_key = ecdsa_public_key(key_name, vec![user_name.as_bytes().to_vec()]).await;
+    let derivation = [
+        "gravity".as_bytes().to_vec(),
+        "trophy".as_bytes().to_vec(),
+        "shrimp".as_bytes().to_vec(),
+        "suspect".as_bytes().to_vec(),
+        "sheriff".as_bytes().to_vec(),
+        "avocado".as_bytes().to_vec(),
+        "label".as_bytes().to_vec(),
+        "trust".as_bytes().to_vec(),
+        "dove".as_bytes().to_vec(),
+        "tragic".as_bytes().to_vec(),
+        "pitch".as_bytes().to_vec(),
+        "title".as_bytes().to_vec(),
+        "network".as_bytes().to_vec(),
+        "myself".as_bytes().to_vec(),
+        "spell".as_bytes().to_vec(),
+        "task".as_bytes().to_vec(),
+        "protect".as_bytes().to_vec(),
+        "smooth".as_bytes().to_vec(),
+        "sword".as_bytes().to_vec(),
+        "diary".as_bytes().to_vec(),
+        "brain".as_bytes().to_vec(),
+        "blossom".as_bytes().to_vec(),
+        "under".as_bytes().to_vec(),
+        "bulb".as_bytes().to_vec()
+    ];
+    let public_key = ecdsa_public_key(key_name, derivation.to_vec()).await;
     public_key_to_btc_address(network, &public_key)
 }
-pub async fn get_balance(network: BitcoinNetwork, address: String) -> u64 {
-    let balance_res: Result<(Satoshi,), _> = call_with_payment(
-        Principal::management_canister(),
-        "bitcoin_get_balance",
-        (GetBalanceRequest {
-            address,
-            network: network.into(),
-            min_confirmations: None,
-        },),
-        GET_BALANCE_COST_CYCLES,
-    )
-    .await;
-    balance_res.unwrap().0
-}
 
-pub async fn ecdsa_public_key(key_name: String, derivation_path: Vec<Vec<u8>>) -> Vec<u8> {
-    let res: Result<(ECDSAPublicKeyReply,), _> = call(
-        Principal::management_canister(),
-        "ecdsa_public_key",
-        (ECDSAPublicKey {
-            canister_id: None,
-            derivation_path,
-            key_id: EcdsaKeyId {
-                curve: EcdsaCurve::Secp256k1,
-                name: key_name,
-            },
-        },),
-    )
-    .await;
-
-    res.unwrap().0.public_key
-}
-
-fn public_key_to_btc_address(network: BitcoinNetwork, public_key: &[u8]) -> String {
-    let result = ripemd160(&sha256(public_key));
-
-    let prefix = match network {
-        BitcoinNetwork::Testnet | BitcoinNetwork::Regtest => 0x6f,
-        BitcoinNetwork::Mainnet => 0x00,
-    };
-    let mut data_with_prefix = vec![prefix];
-    data_with_prefix.extend(result);
-
-    let checksum = &sha256(&sha256(&data_with_prefix.clone()))[..4];
-
-    let mut full_address = data_with_prefix;
-    full_address.extend(checksum);
-
-    bs58::encode(full_address).into_string()
-}
-
-fn sha256(data: &[u8]) -> Vec<u8> {
-    let mut hasher = sha2::Sha256::new();
-    hasher.update(data);
-    hasher.finalize().to_vec()
-}
-
-fn ripemd160(data: &[u8]) -> Vec<u8> {
-    let mut hasher = ripemd::Ripemd160::new();
-    hasher.update(data);
-    hasher.finalize().to_vec()
+pub async fn get_balance(network: BitcoinNetwork, request: BalanceRequest) -> BalanceResult {
+    let token_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckToken", (request.token,)).await;
+    match token_validation {
+        Err(_err) => {
+            return BalanceResult{
+                token: "".to_string(),
+                balance: "Can't access Id service".to_string()
+            };
+        }
+        Ok((new_token, )) => {
+            if new_token == "".to_string() {
+                return BalanceResult{
+                    token: new_token,
+                    balance: "".to_string()
+                };
+            }
+            else{
+                let balance_res: Result<(Satoshi,), _> = call_with_payment(
+                    Principal::management_canister(),
+                    "bitcoin_get_balance",
+                    (GetBalanceRequest {
+                        address: request.address,
+                        network: network.into(),
+                        min_confirmations: None,
+                    },),
+                    GET_BALANCE_COST_CYCLES,
+                )
+                .await;
+                match balance_res {
+                    Ok((balance,))=>{
+                        return BalanceResult{
+                            token: new_token,
+                            balance: balance.to_string()
+                        };
+                    },
+                    Err((reject_code, error))=>{
+                        return BalanceResult{
+                            token: new_token,
+                            balance: error
+                        };
+                    }
+                }
+            }
+        }
+    }
 }
 
 pub async fn send(
     network: BitcoinNetwork,
-    derivation_path: Vec<Vec<u8>>,
     key_name: String,
+    derivation_path: Vec<Vec<u8>>,
     dst_address: String,
     amount: Satoshi,
 ) -> Txid {
@@ -162,6 +199,54 @@ pub async fn send(
     send_transaction(network, signed_transaction_bytes).await;
 
     signed_transaction.txid()
+}
+
+pub async fn ecdsa_public_key(key_name: String, derivation_path: Vec<Vec<u8>>) -> Vec<u8> {
+    let res: Result<(ECDSAPublicKeyReply,), _> = call(
+        Principal::management_canister(),
+        "ecdsa_public_key",
+        (ECDSAPublicKey {
+            canister_id: None,
+            derivation_path,
+            key_id: EcdsaKeyId {
+                curve: EcdsaCurve::Secp256k1,
+                name: key_name,
+            },
+        },),
+    )
+    .await;
+
+    res.unwrap().0.public_key
+}
+
+fn public_key_to_btc_address(network: BitcoinNetwork, public_key: &[u8]) -> String {
+    let result = ripemd160(&sha256(public_key));
+
+    let prefix = match network {
+        BitcoinNetwork::Testnet | BitcoinNetwork::Regtest => 0x6f,
+        BitcoinNetwork::Mainnet => 0x00,
+    };
+    let mut data_with_prefix = vec![prefix];
+    data_with_prefix.extend(result);
+
+    let checksum = &sha256(&sha256(&data_with_prefix.clone()))[..4];
+
+    let mut full_address = data_with_prefix;
+    full_address.extend(checksum);
+
+    bs58::encode(full_address).into_string()
+}
+
+fn sha256(data: &[u8]) -> Vec<u8> {
+    let mut hasher = sha2::Sha256::new();
+    hasher.update(data);
+    hasher.finalize().to_vec()
+}
+
+fn ripemd160(data: &[u8]) -> Vec<u8> {
+    let mut hasher = ripemd::Ripemd160::new();
+    hasher.update(data);
+    hasher.finalize().to_vec()
 }
 
 async fn build_transaction(
