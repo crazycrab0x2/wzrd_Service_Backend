@@ -69,34 +69,9 @@ pub struct SendResult {
     pub tx_id: String
 }
 
-pub async fn get_btc_address (network: BitcoinNetwork, key_name: String, user_name: String) -> String {
-    let derivation = [
-        "gravity".as_bytes().to_vec(),
-        "trophy".as_bytes().to_vec(),
-        "shrimp".as_bytes().to_vec(),
-        "suspect".as_bytes().to_vec(),
-        "sheriff".as_bytes().to_vec(),
-        "avocado".as_bytes().to_vec(),
-        "label".as_bytes().to_vec(),
-        "trust".as_bytes().to_vec(),
-        "dove".as_bytes().to_vec(),
-        "tragic".as_bytes().to_vec(),
-        "pitch".as_bytes().to_vec(),
-        "title".as_bytes().to_vec(),
-        "network".as_bytes().to_vec(),
-        "myself".as_bytes().to_vec(),
-        "spell".as_bytes().to_vec(),
-        "task".as_bytes().to_vec(),
-        "protect".as_bytes().to_vec(),
-        "smooth".as_bytes().to_vec(),
-        "sword".as_bytes().to_vec(),
-        "diary".as_bytes().to_vec(),
-        "brain".as_bytes().to_vec(),
-        "blossom".as_bytes().to_vec(),
-        "under".as_bytes().to_vec(),
-        "bulb".as_bytes().to_vec()
-    ];
-    let public_key = ecdsa_public_key(key_name, derivation.to_vec()).await;
+pub async fn get_btc_address (network: BitcoinNetwork, key_name: String, phrase: String) -> String {
+    let derivation: Vec<Vec<u8>> = phrase.split_whitespace().map(|word| word.as_bytes().to_vec()).collect();
+    let public_key = ecdsa_public_key(key_name, derivation).await;
     public_key_to_btc_address(network, &public_key)
 }
 

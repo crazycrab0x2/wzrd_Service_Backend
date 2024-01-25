@@ -1,6 +1,27 @@
+type CreateWalletResponse = record  {
+    "token": text;
+    "phrase": text;
+    "btc_address": text;
+    "icp_address": text;
+    "eth_address": text;
+}
+
 
 service : {
-    "Get_BTC_Address": (user_name: text) -> (text);
+    "Create_Wallet": (record{
+      token: text;
+    }) -> (CreateWalletResponse);
+    
+    "Destroy_Wallet": (record {
+      token: text;
+    }) -> (record {
+      token: text;
+      result: text;
+    });
+
+    "Get_Wallet_Address": (record{
+      token: text;
+    }) -> (CreateWalletResponse);
 
     "Get_BTC_Balance": (record {
       token: text;
@@ -18,8 +39,6 @@ service : {
       tx_id: text;
       token: text;
     });
-
-    "Get_ICP_Address": (user_name: text) -> (text);
 
     "Get_ICP_Balance": (record{
       token: text;
