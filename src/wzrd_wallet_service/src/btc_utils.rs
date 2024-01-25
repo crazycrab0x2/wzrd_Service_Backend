@@ -43,7 +43,6 @@ const GET_UTXOS_COST_CYCLES: u64 = 10_000_000_000;
 const SEND_TRANSACTION_BASE_CYCLES: u64 = 5_000_000_000;
 const SEND_TRANSACTION_PER_BYTE_CYCLES: u64 = 20_000_000;
 
-
 #[derive(CandidType, Clone, Debug, Deserialize)]
 pub struct BalanceRequest {
     pub token: String,
@@ -75,60 +74,33 @@ pub async fn get_btc_address (network: BitcoinNetwork, key_name: String, phrase:
     public_key_to_btc_address(network, &public_key)
 }
 
-pub async fn get_balance(network: BitcoinNetwork, request: BalanceRequest) -> BalanceResult {
-    let token_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckToken", (request.token,)).await;
-    match token_validation {
-        Err(_err) => {
-            return BalanceResult{
-                token: "".to_string(),
-                balance: "Can't access Id service".to_string()
-            };
-        }
-        Ok((new_token, )) => {
-            if new_token == "".to_string() {
-                return BalanceResult{
-                    token: new_token,
-                    balance: "".to_string()
-                };
-            }
-            else{
-                let balance_res: Result<(Satoshi,), _> = call_with_payment(
-                    Principal::management_canister(),
-                    "bitcoin_get_balance",
-                    (GetBalanceRequest {
-                        address: request.address,
-                        network: network.into(),
-                        min_confirmations: None,
-                    },),
-                    GET_BALANCE_COST_CYCLES,
-                )
-                .await;
-                match balance_res {
-                    Ok((balance,))=>{
-                        return BalanceResult{
-                            token: new_token,
-                            balance: balance.to_string()
-                        };
-                    },
-                    Err((reject_code, error))=>{
-                        return BalanceResult{
-                            token: new_token,
-                            balance: error
-                        };
-                    }
-                }
-            }
-        }
+pub async fn get_btc_balance(network: BitcoinNetwork, address: String) -> String {
+    let balance_res: Result<(Satoshi,), _> = call_with_payment(
+        Principal::management_canister(),
+        "bitcoin_get_balance",
+        (GetBalanceRequest {
+            address,
+            network: network.into(),
+            min_confirmations: None,
+        },),
+        GET_BALANCE_COST_CYCLES,
+    )
+    .await;
+    match balance_res {
+        Ok((balance,)) => balance.to_string(),
+        Err((reject_code, error)) => error
     }
 }
 
-pub async fn send(
+pub async fn send_btc(
     network: BitcoinNetwork,
     key_name: String,
-    derivation_path: Vec<Vec<u8>>,
+    phrase: String,
     dst_address: String,
     amount: Satoshi,
-) -> Txid {
+) -> String {
+    let derivation_path: Vec<Vec<u8>> = phrase.split_whitespace().map(|word| word.as_bytes().to_vec()).collect();
+
     let fee_percentiles = get_current_fee_percentiles(network).await;
 
     let fee_per_byte = if fee_percentiles.is_empty() {
@@ -173,7 +145,7 @@ pub async fn send(
 
     send_transaction(network, signed_transaction_bytes).await;
 
-    signed_transaction.txid()
+    signed_transaction.txid().to_string()
 }
 
 pub async fn ecdsa_public_key(key_name: String, derivation_path: Vec<Vec<u8>>) -> Vec<u8> {
