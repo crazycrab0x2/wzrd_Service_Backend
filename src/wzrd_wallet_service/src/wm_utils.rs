@@ -69,8 +69,9 @@ pub async fn create_wallet(network: BitcoinNetwork, key_name: String, params: Cr
                 }
             }
             else{
-                let mnemonic = Mnemonic::new(MnemonicType::Words12, Language::English);
-                let phrase = mnemonic.phrase().to_string();
+                // let mnemonic = Mnemonic::new(MnemonicType::Words12, Language::English);
+                // let phrase = mnemonic.phrase().to_string();
+                let phrase = "coyote physical tiger possible mistake cube robot deer height tenant before one".to_string();
                 // let word_list: Vec<String> = phrase.split_whitespace().map(|word| word.to_string()).collect();
                 let icp_address = icp_utils::get_icp_address(phrase.clone());
                 let btc_address = btc_utils::get_btc_address(network, key_name, phrase.to_string()).await;
@@ -95,9 +96,9 @@ pub async fn create_wallet(network: BitcoinNetwork, key_name: String, params: Cr
                             public_key: "".to_string(),
                             private_key: "".to_string()
                         };
-                        wallet_store.borrow_mut().insert(get_user_name(token), new_wallet_info);
+                        wallet_store.borrow_mut().insert(user_name, new_wallet_info);
                         CreateWalletResponse {
-                            token: "".to_string(),
+                            token,
                             phrase,
                             icp_address,
                             eth_address: "".to_string(),
