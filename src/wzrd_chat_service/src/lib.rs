@@ -16,7 +16,7 @@ pub async fn leave_group(params: chat_utils::LeaveGroupParams) -> chat_utils::Le
     chat_utils::leave_group(params).await
 }
 
-#[query(name = "GetGroupMembers")]
+#[update(name = "GetGroupMembers")]
 pub async fn get_group_members(params: chat_utils::GetGroupMembersParams) -> chat_utils::GetGroupMembersResponse {
     chat_utils::get_group_members(params).await
 }
@@ -26,7 +26,7 @@ pub async fn get_group_list(params: chat_utils::GetJoinedGroupParams) -> chat_ut
     chat_utils::get_group_list(params).await
 }
 
-#[query(name = "GetGoupMessage")]
+#[update(name = "GetGoupMessage")]
 pub async fn get_group_messages(params: chat_utils::GetGroupMessageParams) -> chat_utils::GetGroupMessageResponse {
     chat_utils::get_group_messages(params).await
 }

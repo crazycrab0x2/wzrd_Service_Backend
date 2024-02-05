@@ -2491,8 +2491,10 @@ version = "0.1.0"
 dependencies = [
  "candid 0.8.4",
  "getrandom",
+ "hmac 0.12.1",
  "ic-cdk 0.7.4",
  "ic-cdk-timers",
+ "jwt",
  "libc",
  "pbkdf2 0.12.2",
  "rand 0.8.5",
