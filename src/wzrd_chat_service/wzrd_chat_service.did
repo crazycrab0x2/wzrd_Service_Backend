@@ -16,50 +16,44 @@ type DirectMessage = record {
 };
 type CreateGroupParams = record {
     "token": text;
-    "user_name": text; 
     "group_id": text; 
     "group_name": text; 
     "group_description": opt text;
 };
 type LeaveGroupParams = record {
     "token": text;
-    "user_name": text; 
     "group_id": text;
 };
 type JoinGroupParam = record {
     "token": text;
-    "user_name": text; 
     "group_id": text;
 };
 type SendGroupMessageParam = record {
     "token": text;
-    "user_name": text; 
     "group_id": text; 
     "reply_id": opt text;
     "content": text;
 };
 type SendDirectMessageParam = record {
     "token": text;
-    "sender": text; 
     "receiver": text; 
     "reply_id": opt text;
     "content": text;
 };
 type GetDirectMessageParam = record {
     "token": text;
-    "sender": text; 
     "receiver": text;
 };
 service : {
-    "CreateGroup": (params: CreateGroupParams) -> (record{token: text; result: text;});
-    "JoinGroup": (params: JoinGroupParam) -> (record{token: text; result: text;});
-    "LeaveGroup": (params: LeaveGroupParams) -> (record{token: text; result: text;});
-    "GetGroupMembers": (record{ token: text; group_id: text;}) -> (record{ token: text; result: vec text;}) query;
-    "GetJoinedGroup": (record{ token: text; user_name: text;}) -> (record{ token: text; result: vec text;}) query;
-    "GetGoupMessage": (record{ token: text; group_id: text;})-> (record{ token: text; result: vec GroupMessage;}) query;
-    "SendGroupMessage": (params: SendGroupMessageParam) -> (record{ token: text; result: text;});
-    "SendDirectMessage": (params: SendDirectMessageParam) -> (record{ token: text; result: text;});
-    "GetConnectedMembers": (record{ token: text; user_name: text;}) -> (record{ token: text; result: vec text;}) query;
-    "GetDirectMessages": (params: GetDirectMessageParam) -> (record{ token: text; result: vec DirectMessage;}) query;
+    "CreateGroup": (params: CreateGroupParams) -> (record{token: text; result: bool; error: text;});
+    "JoinGroup": (params: JoinGroupParam) -> (record{token: text; result: bool; error: text;});
+    "LeaveGroup": (params: LeaveGroupParams) -> (record{token: text; result: bool; error: text;});
+    "GetGroupMembers": (record{ token: text; group_id: text;}) -> (record{ token: text; result: vec text; error: text;});
+    "GetJoinedGroup": (record{ token: text }) -> (record{ token: text; result: vec text; error: text;});
+    "GetGoupMessage": (record{ token: text; group_id: text;})-> (record{ token: text; result: vec GroupMessage; error: text;});
+    "SendGroupMessage": (params: SendGroupMessageParam) -> (record{ token: text; result: bool; error: text;});
+    "SendDirectMessage": (params: SendDirectMessageParam) -> (record{ token: text; result: bool; error: text;});
+    "GetConnectedMembers": (record{ token: text; }) -> (record{ token: text; result: vec text; error: text;});
+    "GetDirectMessages": (params: GetDirectMessageParam) -> (record{ token: text; result: vec DirectMessage; error: text;});
     "ViewMessage": (record{ token: text; msg_id: text;}) -> (record{ token: text; result: bool;});
 }
