@@ -74,7 +74,7 @@ pub struct SendResult {
 }
 
 pub async fn create_wallet(network: BitcoinNetwork, key_name: String, params: CreateWalletParams) -> CreateWalletResponse {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("urpxs-4aaaa-aaaap-qb6mq-cai").unwrap(), "CheckToken", (params.token,)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("bd3sg-teaaa-aaaaa-qaaba-cai").unwrap(), "CheckToken", (params.token,)).await;
     match user_validation {
         Err(_err) => {
             CreateWalletResponse {
@@ -98,43 +98,59 @@ pub async fn create_wallet(network: BitcoinNetwork, key_name: String, params: Cr
                 }
             }
             else{
-                let mnemonic = Mnemonic::new(MnemonicType::Words12, Language::English);
-                let phrase = mnemonic.phrase().to_string();
-                let icp_address = icp_utils::get_icp_address(phrase.clone());
-                let btc_address = btc_utils::get_btc_address(network, key_name, phrase.to_string()).await;
-                let user_name = get_user_name(token.clone());
-                WALLET_STORE.with(|wallet_store| {
-                    if wallet_store.borrow().get(&user_name).is_some(){
-                        let wallet_info = wallet_store.borrow().get(&user_name).unwrap().clone();
+                let res = ic_cdk::call::<(), (Vec<u8>,)>(Principal::management_canister(), "raw_rand", ()).await;
+                match res {
+                    Ok((entropy,)) => {
+                        let mnemonic = Mnemonic::from_entropy(&entropy, Language::English).unwrap();
+                        let phrase = mnemonic.phrase().to_string();
+                        // let phrase = "".to_string();
+                        let icp_address = icp_utils::get_icp_address(phrase.clone());
+                        let btc_address = btc_utils::get_btc_address(network, key_name, phrase.to_string()).await;
+                        let user_name = get_user_name(token.clone());
+                        WALLET_STORE.with(|wallet_store| {
+                            if wallet_store.borrow().get(&user_name).is_some(){
+                                let wallet_info = wallet_store.borrow().get(&user_name).unwrap().clone();
+                                CreateWalletResponse {
+                                    error: "".to_string(),
+                                    token,
+                                    phrase: wallet_info.phrase,
+                                    icp_address: wallet_info.icp_address,
+                                    eth_address: "".to_string(),
+                                    btc_address: wallet_info.btc_address
+                                }
+                            }
+                            else{
+                                let new_wallet_info = WalletInfo {
+                                    phrase: phrase.clone(),
+                                    btc_address: btc_address.clone(),
+                                    icp_address: icp_address.clone(),
+                                    eth_address: "".to_string(),
+                                    public_key: "".to_string(),
+                                    private_key: "".to_string()
+                                };
+                                wallet_store.borrow_mut().insert(get_user_name(token.clone()), new_wallet_info);
+                                CreateWalletResponse {
+                                    error: "".to_string(),
+                                    token,
+                                    phrase,
+                                    icp_address,
+                                    eth_address: "".to_string(),
+                                    btc_address
+                                }
+                            }
+                        })
+                    }
+                    Err((_, error)) => {
                         CreateWalletResponse {
-                            error: "".to_string(),
+                            error,
                             token,
-                            phrase: wallet_info.phrase,
-                            icp_address: wallet_info.icp_address,
+                            phrase: "".to_string(),
+                            icp_address: "".to_string(),
                             eth_address: "".to_string(),
-                            btc_address: wallet_info.btc_address
+                            btc_address: "".to_string()
                         }
                     }
-                    else{
-                        let new_wallet_info = WalletInfo {
-                            phrase: phrase.clone(),
-                            btc_address: btc_address.clone(),
-                            icp_address: icp_address.clone(),
-                            eth_address: "".to_string(),
-                            public_key: "".to_string(),
-                            private_key: "".to_string()
-                        };
-                        wallet_store.borrow_mut().insert(get_user_name(token.clone()), new_wallet_info);
-                        CreateWalletResponse {
-                            error: "".to_string(),
-                            token,
-                            phrase,
-                            icp_address,
-                            eth_address: "".to_string(),
-                            btc_address
-                        }
-                    }
-                })
+                }
             }
         }
     }
