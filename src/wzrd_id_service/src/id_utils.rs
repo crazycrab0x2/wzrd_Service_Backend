@@ -15,6 +15,30 @@ pub struct RegisterParams{
 }
 
 #[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct RequestResult{
+    pub error: String,
+    pub result: String
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct SetProfileResult{
+    pub error: String,
+    pub result: bool
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct GetProfileResult{
+    pub error: String,
+    pub result: Option<Profile>
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
+pub struct AuthResult{
+    pub error: String,
+    pub result: bool
+}
+
+#[derive(Clone, Debug, Deserialize, CandidType)]
 pub struct AuthenticationParams {
     pub user_name: String,
     pub key_id: String,
@@ -45,7 +69,7 @@ pub struct SetProfileParams {
     pub phone: Option<String>
 }
 
-type KeyStore = BTreeMap<String, FidoKey>; //(user_name => vec<key_id>)
+type KeyStore = BTreeMap<String, FidoKey>; //(user_name => Fido key)
 type ProfileStore = BTreeMap<String, Profile>; //(user_name => vec<key_id>)
 
 thread_local! {
@@ -53,21 +77,30 @@ thread_local! {
     pub static PROFILE_STORE: RefCell<ProfileStore> = RefCell::default();
 }
 
-pub fn register_request(username: String) -> String {
+pub fn register_request(username: String) -> RequestResult {
     KEY_STORE.with( |key_store| {
         if key_store.borrow().get(&username).is_some() {
-            "Username already registered.".to_string()
+            RequestResult{
+                error: "Username already registered".to_string(),
+                result: "".to_string()
+            }
         }
         else{
-            get_challenge()
+            RequestResult{
+                error: "".to_string(),
+                result: get_challenge()
+            }
         }
     })
 }
 
-pub fn register(params: RegisterParams) -> String {
+pub fn register(params: RegisterParams) -> AuthResult {
     KEY_STORE.with( |key_store| {
         if key_store.borrow().get(&params.user_name).is_some() {
-            "Username already registered.".to_string()
+            AuthResult{
+                error: "Username already registered".to_string(),
+                result: false
+            }
         }
         else{
             let new_key = FidoKey{
@@ -75,35 +108,53 @@ pub fn register(params: RegisterParams) -> String {
                 public_key: params.public_key
             };
             key_store.borrow_mut().insert(params.user_name, new_key);
-            "Success.".to_string()
+            AuthResult{
+                error: "".to_string(),
+                result: true
+            }
         }
     })
 }
 
-pub fn authentication_request(user_name: String) -> String {
+pub fn authentication_request(user_name: String) -> RequestResult {
     KEY_STORE.with( |key_store| {
         if key_store.borrow().get(&user_name).is_some() {
-            get_challenge()
+            RequestResult{
+                result: get_challenge(),
+                error: "".to_string()
+            }
         }
         else{
-            "Username not registered.".to_string()
+            RequestResult{
+                error: "Username not registered".to_string(),
+                result: "".to_string()
+            }
         }
     })
 }
 
-pub fn authentication(params: AuthenticationParams) -> String {
+pub fn authentication(params: AuthenticationParams) -> RequestResult {
     KEY_STORE.with( |key_store| {
         if key_store.borrow().get(&params.user_name).is_some() {
             let key = key_store.borrow().get(&params.user_name).unwrap().clone();
             if key.key_id == params.key_id {
-                generate_token(params.user_name, params.key_id)
+                RequestResult{
+                    error: "".to_string(),
+                    result: generate_token(params.user_name, params.key_id)
+                }
             }
             else{
-                "Authentication failed.".to_string()
+                RequestResult{
+                    error: "Authentication failed".to_string(),
+                    result: "".to_string()
+                }
             }
         }
         else{
-            "Username not registered.".to_string()
+            RequestResult{
+                error: "Username not registered".to_string(),
+                result: "".to_string()
+            }
         }
     })
 }
@@ -187,7 +238,7 @@ pub fn has_user(user_name: &String) -> bool {
     KEY_STORE.with(|key_store| key_store.borrow().get(user_name).is_some())
 }
 
-pub fn set_profile(params: SetProfileParams) -> bool {
+pub fn set_profile(params: SetProfileParams) -> SetProfileResult {
     KEY_STORE.with( |key_store| {
         if key_store.borrow().get(&params.user_name).is_some() {
             let profile = Profile {
@@ -199,26 +250,44 @@ pub fn set_profile(params: SetProfileParams) -> bool {
             PROFILE_STORE.with(|profile_store| {
                 profile_store.borrow_mut().insert(params.user_name, profile);
             });
-            true
+            SetProfileResult{
+                error: "".to_string(),
+                result: true
+            }
         }
         else{
-            false
+            SetProfileResult{
+                error: "Username doesn't exist".to_string(),
+                result: false
+            }
         }
     })
 }
 
-pub fn get_profile(user_name: String) -> Profile {
-    let none_profile = Profile {
-        first_name: None,
-        last_name: None,
-        phone: None,
-        email: None,
-    };
-    PROFILE_STORE.with(|profile_store| {
-        profile_store
-            .borrow()
-            .get(&user_name)
-            .unwrap_or(&none_profile)
-            .clone()
+pub fn get_profile(user_name: String) -> GetProfileResult {
+    KEY_STORE.with(|key_store| {
+        if key_store.borrow().get(&user_name).is_some() {
+            PROFILE_STORE.with(|profile_store| {
+                if profile_store.borrow().get(&user_name).is_some() {
+                    let user_profile = profile_store.borrow().get(&user_name).unwrap().clone();
+                    GetProfileResult{
+                        error: "".to_string(),
+                        result: Some(user_profile)
+                    }
+                }
+                else{
+                    GetProfileResult{
+                        error: "User profile doesn't exist".to_string(),
+                        result: None
+                    }
+                }
+            })
+        }
+        else {
+            GetProfileResult{
+                error: "Username doesn't exist".to_string(),
+                result: None
+            }
+        }
     })
 }

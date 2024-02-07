@@ -1,13 +1,12 @@
-use bitcoin::blockdata::block;
+// use bitcoin::blockdata::block;
 use candid::{CandidType, Deserialize, Principal};
 use ic_cdk::api::management_canister::bitcoin::BitcoinNetwork;
-use std::{clone, collections::BTreeMap};
+use std::collections::BTreeMap;
 use std::cell::RefCell;
-use bip39::{Mnemonic, Language, Seed, MnemonicType}; 
-use sha2::{Digest, Sha256};
-use ic_ledger_types::{AccountIdentifier, Subaccount, transfer, Tokens, Memo, TransferArgs, DEFAULT_FEE, AccountBalanceArgs, MAINNET_LEDGER_CANISTER_ID, account_balance};
+use bip39::{Mnemonic, Language, MnemonicType}; 
+use sha2::Sha256;
 use hmac::{Hmac, Mac};
-use jwt::{SignWithKey, VerifyWithKey};
+use jwt::VerifyWithKey;
 use crate::{btc_utils, icp_utils};
 
 #[derive(CandidType,Clone, Deserialize, Debug)]
@@ -33,12 +32,14 @@ pub struct CreateWalletParams {
 
 #[derive(CandidType, Clone, Debug, Deserialize)]
 pub struct DestoryWalletResponse {
+    pub error: String,
     pub token: String,
-    pub result: String
+    pub result: bool
 }
 
 #[derive(CandidType, Clone, Debug, Deserialize)]
 pub struct CreateWalletResponse {
+    pub error: String,
     pub token: String,
     pub phrase: String,
     pub btc_address: String,
@@ -53,8 +54,9 @@ pub struct BalanceRequest {
 
 #[derive(CandidType, Clone, Debug, Deserialize)]
 pub struct BalanceResult {
+    pub error: String,
     pub token: String,
-    pub balance: String
+    pub balance: u64
 }
 
 #[derive(CandidType, Deserialize)]
@@ -66,6 +68,7 @@ pub struct SendRequest {
 
 #[derive(CandidType, Clone, Debug, Deserialize)]
 pub struct SendResult {
+    pub error: String,
     pub token: String,
     pub result: String
 }
@@ -75,8 +78,9 @@ pub async fn create_wallet(network: BitcoinNetwork, key_name: String, params: Cr
     match user_validation {
         Err(_err) => {
             CreateWalletResponse {
+                error: "Can't access ID service".to_string(),
                 token: "".to_string(),
-                phrase: "Can't access ID service".to_string(),
+                phrase: "".to_string(),
                 icp_address: "".to_string(),
                 eth_address: "".to_string(),
                 btc_address: "".to_string()
@@ -85,8 +89,9 @@ pub async fn create_wallet(network: BitcoinNetwork, key_name: String, params: Cr
         Ok((token,)) => {
             if token == "".to_string() {
                 CreateWalletResponse {
+                    error: "Invalid token".to_string(),
                     token: "".to_string(),
-                    phrase: "Invalid token".to_string(),
+                    phrase: "".to_string(),
                     icp_address: "".to_string(),
                     eth_address: "".to_string(),
                     btc_address: "".to_string()
@@ -95,7 +100,6 @@ pub async fn create_wallet(network: BitcoinNetwork, key_name: String, params: Cr
             else{
                 let mnemonic = Mnemonic::new(MnemonicType::Words12, Language::English);
                 let phrase = mnemonic.phrase().to_string();
-                // let word_list: Vec<String> = phrase.split_whitespace().map(|word| word.to_string()).collect();
                 let icp_address = icp_utils::get_icp_address(phrase.clone());
                 let btc_address = btc_utils::get_btc_address(network, key_name, phrase.to_string()).await;
                 let user_name = get_user_name(token.clone());
@@ -103,6 +107,7 @@ pub async fn create_wallet(network: BitcoinNetwork, key_name: String, params: Cr
                     if wallet_store.borrow().get(&user_name).is_some(){
                         let wallet_info = wallet_store.borrow().get(&user_name).unwrap().clone();
                         CreateWalletResponse {
+                            error: "".to_string(),
                             token,
                             phrase: wallet_info.phrase,
                             icp_address: wallet_info.icp_address,
@@ -119,9 +124,10 @@ pub async fn create_wallet(network: BitcoinNetwork, key_name: String, params: Cr
                             public_key: "".to_string(),
                             private_key: "".to_string()
                         };
-                        wallet_store.borrow_mut().insert(get_user_name(token), new_wallet_info);
+                        wallet_store.borrow_mut().insert(get_user_name(token.clone()), new_wallet_info);
                         CreateWalletResponse {
-                            token: "".to_string(),
+                            error: "".to_string(),
+                            token,
                             phrase,
                             icp_address,
                             eth_address: "".to_string(),
@@ -139,15 +145,17 @@ pub async fn destroy_wallet(params: CreateWalletParams) -> DestoryWalletResponse
     match user_validation {
         Err(_err) => {
             DestoryWalletResponse {
+                error: "Can't access ID service".to_string(),
                 token: "".to_string(),
-                result: "Can't access ID service".to_string()
+                result: false
             }
         }
         Ok((token,)) => {
             if token == "".to_string() {
-                DestoryWalletResponse {
+               DestoryWalletResponse {
+                    error: "Invalid token".to_string(),
                     token,
-                    result: "Invalid token".to_string()
+                    result: false
                 }
             }
             else{
@@ -156,14 +164,16 @@ pub async fn destroy_wallet(params: CreateWalletParams) -> DestoryWalletResponse
                     let res = wallet_store.borrow_mut().remove(&user_name);
                     if res.is_some() {
                         DestoryWalletResponse {
+                            error: "".to_string(),
                             token,
-                            result: "Success".to_string()
+                            result: true
                         }
                     }
                     else{
                         DestoryWalletResponse {
+                            error: "No wallet exist".to_string(),
                             token,
-                            result: "No exist wallet".to_string()
+                            result: false
                         }
                     }
                 })
@@ -177,6 +187,7 @@ pub async fn get_wallet_address(params: CreateWalletParams) -> CreateWalletRespo
     match user_validation {
         Err(_err) => {
             CreateWalletResponse {
+                error: "Can't access ID service".to_string(),
                 token: "".to_string(),
                 phrase: "".to_string(),
                 icp_address: "".to_string(),
@@ -187,6 +198,7 @@ pub async fn get_wallet_address(params: CreateWalletParams) -> CreateWalletRespo
         Ok((token,)) => {
             if token == "".to_string() {
                 CreateWalletResponse {
+                    error: "Invalid token".to_string(),
                     token: "".to_string(),
                     phrase: "".to_string(),
                     icp_address: "".to_string(),
@@ -200,6 +212,7 @@ pub async fn get_wallet_address(params: CreateWalletParams) -> CreateWalletRespo
                     if wallet_store.borrow().get(&user_name).is_some(){
                         let wallet_info = wallet_store.borrow().get(&user_name).unwrap().clone();
                         CreateWalletResponse {
+                            error: "".to_string(),
                             token,
                             phrase: wallet_info.phrase,
                             icp_address: wallet_info.icp_address,
@@ -209,6 +222,7 @@ pub async fn get_wallet_address(params: CreateWalletParams) -> CreateWalletRespo
                     }
                     else {
                         CreateWalletResponse {
+                            error: "No wallet exist".to_string(),
                             token,
                             phrase: "".to_string(),
                             icp_address: "".to_string(),
@@ -227,15 +241,17 @@ pub async fn get_icp_balance(params: BalanceRequest) -> BalanceResult {
     match user_validation {
         Err(_err) => {
             BalanceResult {
+                error: "Can't access ID service".to_string(),
                 token: "".to_string(),
-                balance: "Can't access ID service".to_string()
+                balance: 0
             }
         }
         Ok((token,)) => {
             if token == "".to_string() {
                 BalanceResult {
+                    error: "Invalid token".to_string(),
                     token,
-                    balance: "Invalid token".to_string()
+                    balance: 0
                 }
             }
             else{
@@ -248,13 +264,15 @@ pub async fn get_icp_balance(params: BalanceRequest) -> BalanceResult {
                 });
                 if address == "".to_string() {
                     BalanceResult {
+                        error: "No wallet exist".to_string(),
                         token,
-                        balance: "No exist wallet".to_string()
+                        balance: 0
                     }
                 }
                 else {
-                    let balance = icp_utils::get_icp_balance(address).await;
+                    let (error, balance) = icp_utils::get_icp_balance(address).await;
                     BalanceResult {
+                        error,
                         token,
                         balance
                     }
@@ -269,15 +287,17 @@ pub async fn send_icp(params: SendRequest) -> SendResult {
     match user_validation {
         Err(_err) => {
             SendResult {
+                error: "Can't access ID service".to_string(),
                 token: "".to_string(),
-                result: "Can't access ID service".to_string()
+                result: "".to_string()
             }
         }
         Ok((token,)) => {
             if token == "".to_string() {
                 SendResult {
+                    error: "Invalid token".to_string(),
                     token,
-                    result: "Invalid token".to_string()
+                    result: "".to_string()
                 }
             }
             else{
@@ -290,13 +310,15 @@ pub async fn send_icp(params: SendRequest) -> SendResult {
                 });
                 if phrase == "".to_string() {
                     SendResult {
+                        error: "No wallet exist".to_string(),
                         token,
-                        result: "No exist wallet".to_string()
+                        result: "".to_string()
                     }
                 }
                 else {
-                    let result = icp_utils::send_icp(phrase, params.destination_address, params.amount_in_e8s).await;
+                    let (error, result) = icp_utils::send_icp(phrase, params.destination_address, params.amount_in_e8s).await;
                     SendResult {
+                        error,
                         token,
                         result
                     }
@@ -311,15 +333,17 @@ pub async fn get_btc_balance(network: BitcoinNetwork, params: BalanceRequest) ->
     match user_validation {
         Err(_err) => {
             BalanceResult {
+                error: "Can't access ID service".to_string(),
                 token: "".to_string(),
-                balance: "Can't access ID service".to_string()
+                balance: 0
             }
         }
         Ok((token,)) => {
             if token == "".to_string() {
                 BalanceResult {
+                    error: "Invalid token".to_string(),
                     token,
-                    balance: "Invalid token".to_string()
+                    balance: 0
                 }
             }
             else{
@@ -332,13 +356,15 @@ pub async fn get_btc_balance(network: BitcoinNetwork, params: BalanceRequest) ->
                 });
                 if address == "".to_string() {
                     BalanceResult {
+                        error: "No wallet exist".to_string(),
                         token,
-                        balance: "No exist wallet".to_string()
+                        balance: 0
                     }
                 }
                 else {
-                    let balance = btc_utils::get_btc_balance(network, address).await;
+                    let (error, balance) = btc_utils::get_btc_balance(network, address).await;
                     BalanceResult {
+                        error,
                         token,
                         balance
                     }
@@ -353,15 +379,17 @@ pub async fn send_btc(network: BitcoinNetwork, key_name: String, params: SendReq
     match user_validation {
         Err(_err) => {
             SendResult {
+                error: "Can't access ID service".to_string(),
                 token: "".to_string(),
-                result: "Can't access ID service".to_string()
+                result: "".to_string()
             }
         }
         Ok((token,)) => {
             if token == "".to_string() {
                 SendResult {
+                    error: "Invalid token".to_string(),
                     token,
-                    result: "Invalid token".to_string()
+                    result: "".to_string()
                 }
             }
             else{
@@ -374,13 +402,15 @@ pub async fn send_btc(network: BitcoinNetwork, key_name: String, params: SendReq
                 });
                 if phrase == "".to_string() {
                     SendResult {
+                        error: "No wallet exist".to_string(),
                         token,
-                        result: "No exist wallet".to_string()
+                        result: "".to_string()
                     }
                 }
                 else {
-                    let result = btc_utils::send_btc(network, key_name, phrase, params.destination_address, params.amount_in_e8s).await;
+                    let (error, result) = btc_utils::send_btc(network, key_name, phrase, params.destination_address, params.amount_in_e8s).await;
                     SendResult {
+                        error,
                         token,
                         result
                     }

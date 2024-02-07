@@ -4,23 +4,24 @@ type Profile = record {
     "email": opt text;
     "phone": opt text;
 };
+
 service : {
-    "RegisterRequest": (username: text) -> (text) query;
+    "RegisterRequest": (username: text) -> (record { error: text; result: text; }) query;
 
     "Register": (record{
         user_name: text;
         public_key: text;
         key_id: text;
-    }) -> (text);
+    }) -> (record { error: text; result: bool; });
 
-    "AuthenticationRequest": (username: text) -> (text) query;
+    "AuthenticationRequest": (username: text) -> (record { error: text; result: text; }) query;
 
     "Authentication": (record{
         user_name: text;
         key_id: text;
         signature: text;
         authenticator_data: text
-    }) -> (text) query;
+    }) -> (record { error: text; result: text; }) query;
 
     "SetProfile": (record{
         user_name: text;
@@ -28,8 +29,8 @@ service : {
         last_name: opt text;
         email: opt text;
         phone: opt text
-    }) -> (bool);
-    "GetProfile": (text) -> (Profile) query;
+    }) -> (record { error: text; result: bool; });
+    "GetProfile": (text) -> (record { error: text; result: opt Profile; }) query;
     "CheckUser": (text) -> (bool) query;
     "GetPrincipal": () -> (text) query;
     "CheckToken": (text) -> (text) query;
