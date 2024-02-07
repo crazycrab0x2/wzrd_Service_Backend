@@ -74,7 +74,7 @@ pub async fn get_btc_address (network: BitcoinNetwork, key_name: String, phrase:
     public_key_to_btc_address(network, &public_key)
 }
 
-pub async fn get_btc_balance(network: BitcoinNetwork, address: String) -> String {
+pub async fn get_btc_balance(network: BitcoinNetwork, address: String) -> (String, u64) {
     let balance_res: Result<(Satoshi,), _> = call_with_payment(
         Principal::management_canister(),
         "bitcoin_get_balance",
@@ -87,8 +87,8 @@ pub async fn get_btc_balance(network: BitcoinNetwork, address: String) -> String
     )
     .await;
     match balance_res {
-        Ok((balance,)) => balance.to_string(),
-        Err((reject_code, error)) => error
+        Ok((balance,)) => ("".to_string(), balance),
+        Err((_, error)) => (error, 0)
     }
 }
 
@@ -98,7 +98,7 @@ pub async fn send_btc(
     phrase: String,
     dst_address: String,
     amount: Satoshi,
-) -> String {
+) -> (String, String) {
     let derivation_path: Vec<Vec<u8>> = phrase.split_whitespace().map(|word| word.as_bytes().to_vec()).collect();
 
     let fee_percentiles = get_current_fee_percentiles(network).await;
@@ -110,6 +110,7 @@ pub async fn send_btc(
     };
 
     let own_public_key = ecdsa_public_key(key_name.clone(), derivation_path.clone()).await;
+
     let own_address = public_key_to_btc_address(network, &own_public_key);
 
     let own_utxos = get_utxos(network, own_address.clone())
@@ -145,7 +146,7 @@ pub async fn send_btc(
 
     send_transaction(network, signed_transaction_bytes).await;
 
-    signed_transaction.txid().to_string()
+    ("".to_string(), signed_transaction.txid().to_string())
 }
 
 pub async fn ecdsa_public_key(key_name: String, derivation_path: Vec<Vec<u8>>) -> Vec<u8> {
@@ -160,9 +161,7 @@ pub async fn ecdsa_public_key(key_name: String, derivation_path: Vec<Vec<u8>>) -
                 name: key_name,
             },
         },),
-    )
-    .await;
-
+    ).await;
     res.unwrap().0.public_key
 }
 
@@ -385,7 +384,6 @@ pub async fn get_current_fee_percentiles(network: BitcoinNetwork) -> Vec<Millisa
         GET_CURRENT_FEE_PERCENTILES_CYCLES,
     )
     .await;
-
     res.unwrap().0
 }
 
@@ -401,7 +399,6 @@ pub async fn get_utxos(network: BitcoinNetwork, address: String) -> GetUtxosResp
         GET_UTXOS_COST_CYCLES,
     )
     .await;
-
     utxos_res.unwrap().0
 }
 

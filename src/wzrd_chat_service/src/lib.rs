@@ -1,4 +1,4 @@
-use ic_cdk::{query, update};
+use ic_cdk::update;
 mod chat_utils;
 
 #[update(name = "CreateGroup")]

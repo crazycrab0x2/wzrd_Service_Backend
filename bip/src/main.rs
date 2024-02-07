@@ -1,7 +1,7 @@
-use std::vec;
 
-use bip39::{Mnemonic, Language, Seed, MnemonicType}; 
-use hex;
+
+use bip39::{Mnemonic, Language, MnemonicType}; 
+
 
 
 fn main() {

@@ -10,7 +10,7 @@ pub fn get_icp_address(user_name: String) -> String{
     new_subaccount.to_string()
 }
 
-pub async fn get_icp_balance(address: String) -> String {
+pub async fn get_icp_balance(address: String) -> (String, u64) {
   let balance = account_balance(
       MAINNET_LEDGER_CANISTER_ID,
       AccountBalanceArgs {
@@ -19,15 +19,15 @@ pub async fn get_icp_balance(address: String) -> String {
     ).await;
   match balance {
     Ok(tokens) => {
-      tokens.e8s().to_string()
+      ("".to_string(), tokens.e8s())
     }
     Err((_, error)) => {
-      error
+      (error, 0)
     }
   }
 }
 
-pub async fn send_icp(phrase: String, des_address: String, amount: u64) -> String {
+pub async fn send_icp(phrase: String, des_address: String, amount: u64) -> (String, String) {
   let mut hasher = Sha256::new();
   hasher.update(phrase);
   let result = hasher.finalize();
@@ -47,12 +47,12 @@ pub async fn send_icp(phrase: String, des_address: String, amount: u64) -> Strin
   match block_index {
     Ok(result,) => {
       match result {
-        Ok(block_id,) => block_id.to_string(),
-        Err(err,) => err.to_string()
+        Ok(block_id,) => ("".to_string(), block_id.to_string()),
+        Err(err,) => (err.to_string(), "".to_string())
       }
     }
     Err((_, error)) => {
-      error
+      (error, "".to_string())
     }
   }
 }
