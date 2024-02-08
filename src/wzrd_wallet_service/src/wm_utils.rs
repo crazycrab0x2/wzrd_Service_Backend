@@ -63,7 +63,7 @@ pub struct BalanceResult {
 pub struct SendRequest {
     pub token: String,
     pub destination_address: String,
-    pub amount_in_e8s: u64,
+    pub amount: u64,
 }
 
 #[derive(CandidType, Clone, Debug, Deserialize)]
@@ -331,7 +331,7 @@ pub async fn send_icp(params: SendRequest) -> SendResult {
                     }
                 }
                 else {
-                    let (error, result) = icp_utils::send_icp(phrase, params.destination_address, params.amount_in_e8s).await;
+                    let (error, result) = icp_utils::send_icp(phrase, params.destination_address, params.amount).await;
                     SendResult {
                         error,
                         token,
@@ -423,7 +423,7 @@ pub async fn send_btc(network: BitcoinNetwork, key_name: String, params: SendReq
                     }
                 }
                 else {
-                    let (error, result) = btc_utils::send_btc(network, key_name, phrase, params.destination_address, params.amount_in_e8s).await;
+                    let (error, result) = btc_utils::send_btc(network, key_name, phrase, params.destination_address, params.amount).await;
                     SendResult {
                         error,
                         token,
