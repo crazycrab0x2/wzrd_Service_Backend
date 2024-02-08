@@ -101,9 +101,8 @@ pub async fn create_wallet(network: BitcoinNetwork, key_name: String, params: Cr
                 let res = ic_cdk::call::<(), (Vec<u8>,)>(Principal::management_canister(), "raw_rand", ()).await;
                 match res {
                     Ok((entropy,)) => {
-                        let mnemonic = Mnemonic::from_entropy(&entropy, Language::English).unwrap();
+                        let mnemonic = Mnemonic::from_entropy(&entropy[0..16], Language::English).unwrap();
                         let phrase = mnemonic.phrase().to_string();
-                        // let phrase = "".to_string();
                         let icp_address = icp_utils::get_icp_address(phrase.clone());
                         let btc_address = btc_utils::get_btc_address(network, key_name, phrase.to_string()).await;
                         let user_name = get_user_name(token.clone());
