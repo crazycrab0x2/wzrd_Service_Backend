@@ -3,7 +3,7 @@ use candid::{CandidType, Deserialize, Principal};
 use ic_cdk::api::management_canister::bitcoin::BitcoinNetwork;
 use std::collections::BTreeMap;
 use std::cell::RefCell;
-use bip39::{Mnemonic, Language, MnemonicType}; 
+use bip39::{Mnemonic, Language}; 
 use sha2::Sha256;
 use hmac::{Hmac, Mac};
 use jwt::VerifyWithKey;
@@ -15,8 +15,6 @@ pub struct WalletInfo {
     pub btc_address: String,
     pub icp_address: String,
     pub eth_address: String,
-    pub public_key: String,
-    pub private_key: String,
 }
 
 type WalletStore = BTreeMap<String, WalletInfo>; //(user_name => wallet info)
@@ -28,6 +26,12 @@ thread_local! {
 #[derive(CandidType, Clone, Debug, Deserialize)]
 pub struct CreateWalletParams {
     pub token: String
+}
+
+#[derive(CandidType, Clone, Debug, Deserialize)]
+pub struct ImportWalletParams {
+    pub token: String,
+    pub phrase: String
 }
 
 #[derive(CandidType, Clone, Debug, Deserialize)]
@@ -108,14 +112,13 @@ pub async fn create_wallet(network: BitcoinNetwork, key_name: String, params: Cr
                         let user_name = get_user_name(token.clone());
                         WALLET_STORE.with(|wallet_store| {
                             if wallet_store.borrow().get(&user_name).is_some(){
-                                let wallet_info = wallet_store.borrow().get(&user_name).unwrap().clone();
                                 CreateWalletResponse {
-                                    error: "".to_string(),
+                                    error: "Wallet already exist".to_string(),
                                     token,
-                                    phrase: wallet_info.phrase,
-                                    icp_address: wallet_info.icp_address,
+                                    phrase: "".to_string(),
+                                    icp_address: "".to_string(),
                                     eth_address: "".to_string(),
-                                    btc_address: wallet_info.btc_address
+                                    btc_address: "".to_string()
                                 }
                             }
                             else{
@@ -123,9 +126,7 @@ pub async fn create_wallet(network: BitcoinNetwork, key_name: String, params: Cr
                                     phrase: phrase.clone(),
                                     btc_address: btc_address.clone(),
                                     icp_address: icp_address.clone(),
-                                    eth_address: "".to_string(),
-                                    public_key: "".to_string(),
-                                    private_key: "".to_string()
+                                    eth_address: "".to_string()
                                 };
                                 wallet_store.borrow_mut().insert(get_user_name(token.clone()), new_wallet_info);
                                 CreateWalletResponse {
@@ -142,6 +143,84 @@ pub async fn create_wallet(network: BitcoinNetwork, key_name: String, params: Cr
                     Err((_, error)) => {
                         CreateWalletResponse {
                             error,
+                            token,
+                            phrase: "".to_string(),
+                            icp_address: "".to_string(),
+                            eth_address: "".to_string(),
+                            btc_address: "".to_string()
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub async fn import_wallet(network: BitcoinNetwork, key_name: String, params: ImportWalletParams) -> CreateWalletResponse {
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token,)).await;
+    match user_validation {
+        Err(_err) => {
+            CreateWalletResponse {
+                error: "Can't access ID service".to_string(),
+                token: "".to_string(),
+                phrase: "".to_string(),
+                icp_address: "".to_string(),
+                eth_address: "".to_string(),
+                btc_address: "".to_string()
+            }
+        }
+        Ok((token,)) => {
+            if token == "".to_string() {
+                CreateWalletResponse {
+                    error: "Invalid token".to_string(),
+                    token: "".to_string(),
+                    phrase: "".to_string(),
+                    icp_address: "".to_string(),
+                    eth_address: "".to_string(),
+                    btc_address: "".to_string()
+                }
+            }
+            else{
+                let phrase = params.phrase;
+                let mnemonic = Mnemonic::from_phrase(phrase.clone(), Language::English);
+                match mnemonic {
+                    Ok(_) => {
+                        let icp_address = icp_utils::get_icp_address(phrase.clone());
+                        let btc_address = btc_utils::get_btc_address(network, key_name, phrase.to_string()).await;
+                        let user_name = get_user_name(token.clone());
+                        WALLET_STORE.with(|wallet_store| {
+                            if wallet_store.borrow().get(&user_name).is_some(){
+                                CreateWalletResponse {
+                                    error: "Wallet already exist".to_string(),
+                                    token,
+                                    phrase: "".to_string(),
+                                    icp_address: "".to_string(),
+                                    eth_address: "".to_string(),
+                                    btc_address: "".to_string()
+                                }
+                            }
+                            else{
+                                let new_wallet_info = WalletInfo {
+                                    phrase: phrase.clone(),
+                                    btc_address: btc_address.clone(),
+                                    icp_address: icp_address.clone(),
+                                    eth_address: "".to_string(),
+                                };
+                                wallet_store.borrow_mut().insert(get_user_name(token.clone()), new_wallet_info);
+                                CreateWalletResponse {
+                                    error: "".to_string(),
+                                    token,
+                                    phrase,
+                                    icp_address,
+                                    eth_address: "".to_string(),
+                                    btc_address
+                                }
+                            }
+                        })
+                    }
+                    Err(_) => {
+                        CreateWalletResponse {
+                            error: "Invaild phrase".to_string(),
                             token,
                             phrase: "".to_string(),
                             icp_address: "".to_string(),

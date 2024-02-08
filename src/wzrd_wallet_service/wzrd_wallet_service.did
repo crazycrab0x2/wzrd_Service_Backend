@@ -12,6 +12,11 @@ service : {
     "Create_Wallet": (record{
       token: text;
     }) -> (CreateWalletResponse);
+
+    "Import_Wallet": (record{
+      token: text;
+      phrase: text;
+    }) -> (CreateWalletResponse);
     
     "Destroy_Wallet": (record {
       token: text;

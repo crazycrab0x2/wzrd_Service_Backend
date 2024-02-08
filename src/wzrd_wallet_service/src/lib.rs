@@ -19,6 +19,13 @@ pub async fn create_wallet(params: wm_utils::CreateWalletParams) -> wm_utils::Cr
     wm_utils::create_wallet(network, key_name, params).await
 }
 
+#[update (name = "Import_Wallet")]
+pub async fn import_wallet(params: wm_utils::ImportWalletParams) -> wm_utils::CreateWalletResponse {
+    let network = NETWORK.with(|n| n.get());
+    let key_name = KEY_NAME.with(|kn| kn.borrow().to_string());
+    wm_utils::import_wallet(network, key_name, params).await
+}
+
 #[update (name = "Destroy_Wallet")]
 pub async fn destroy_wallet(params: wm_utils::CreateWalletParams) -> wm_utils::DestoryWalletResponse {
     wm_utils::destroy_wallet(params).await
