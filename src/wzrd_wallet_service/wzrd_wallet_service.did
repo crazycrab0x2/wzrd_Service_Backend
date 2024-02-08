@@ -36,11 +36,11 @@ service : {
     "Send_BTC": (record {
       token: text;
       destination_address: text;
-      amount_in_satoshi: nat64;
+      amount: nat64;
     }) -> (record {
       error: text;
       token: text;
-      tx_id: text;
+      result: text;
     });
 
     "Get_ICP_Balance": (record{
@@ -54,10 +54,10 @@ service : {
     "Send_ICP":(record {
       token: text;
       destination_address: text;
-      amount_in_e8s: nat64;
+      amount: nat64;
     }) -> (record {
       error: text;
       token: text;
-      block_index: text;
+      result: text;
     });
 }
