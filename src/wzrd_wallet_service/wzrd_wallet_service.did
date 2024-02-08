@@ -1,4 +1,5 @@
 type CreateWalletResponse = record  {
+    "error": text;
     "token": text;
     "phrase": text;
     "btc_address": text;
@@ -15,8 +16,9 @@ service : {
     "Destroy_Wallet": (record {
       token: text;
     }) -> (record {
+      error: text;
       token: text;
-      result: text;
+      result: bool;
     });
 
     "Get_Wallet_Address": (record{
@@ -25,10 +27,10 @@ service : {
 
     "Get_BTC_Balance": (record {
       token: text;
-      address: text; 
     }) -> (record {
-      balance: text;
+      error: text;
       token: text;
+      balance: nat64;
     });
 
     "Send_BTC": (record {
@@ -36,16 +38,17 @@ service : {
       destination_address: text;
       amount_in_satoshi: nat64;
     }) -> (record {
-      tx_id: text;
+      error: text;
       token: text;
+      tx_id: text;
     });
 
     "Get_ICP_Balance": (record{
       token: text;
-      address: text;
     }) -> (record {
-      balance: text;
+      error: text;
       token: text;
+      balance: nat64;
     });
 
     "Send_ICP":(record {
@@ -53,7 +56,8 @@ service : {
       destination_address: text;
       amount_in_e8s: nat64;
     }) -> (record {
-      block_index: text;
+      error: text;
       token: text;
+      block_index: text;
     });
 }
