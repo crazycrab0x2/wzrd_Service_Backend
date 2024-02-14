@@ -198,7 +198,7 @@ thread_local! {
 pub async fn create_group(
     params: CreateGroupParams
 ) -> CreateGroupResponse {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token,)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token,)).await;
     match user_validation {
         Err(_err) => {
             CreateGroupResponse {
@@ -256,7 +256,7 @@ pub async fn create_group(
 pub async fn join_group(
     params: JoinGroupParams
 ) -> JoinGroupResponse {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
     match user_validation {
         Err(_err) => {
             JoinGroupResponse{
@@ -316,7 +316,7 @@ pub async fn join_group(
 pub async fn leave_group(
     params: LeaveGroupParams
 ) -> LeaveGroupResponse {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
     match user_validation {
         Err(_err) => {
             return LeaveGroupResponse{
@@ -370,7 +370,7 @@ pub async fn leave_group(
 pub async fn get_group_members(
     params: GetGroupMembersParams
 ) -> GetGroupMembersResponse {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
     match user_validation {
         Err(_err) => {
             return GetGroupMembersResponse{
@@ -411,7 +411,7 @@ pub async fn get_group_members(
 pub async fn get_group_list(
     params: GetJoinedGroupParams
 ) -> GetJoinedGroupResponse {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
     match user_validation {
         Err(_err) => {
             GetJoinedGroupResponse{
@@ -446,7 +446,7 @@ pub async fn get_group_list(
 pub async fn get_group_messages(
     params: GetGroupMessageParams
 ) -> GetGroupMessageResponse {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
     match user_validation {
         Err(_err) => {
             GetGroupMessageResponse{
@@ -487,7 +487,7 @@ pub async fn get_group_messages(
 pub async fn send_group_message(
     params: SendGroupMessageParams
 ) -> SendGroupMessageResponse {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
     match user_validation {
         Err(_err) => {
             SendGroupMessageResponse{
@@ -547,7 +547,7 @@ pub async fn send_group_message(
 pub async fn send_direct_message(
     params: SendDirectMessageParams
 ) -> SendDirectMessageResponse {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
     match user_validation {
         Err(_err) => {
             SendDirectMessageResponse{
@@ -565,7 +565,7 @@ pub async fn send_direct_message(
                 }
             }
             else{
-                let receiver_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckUser", (params.receiver.clone(),)).await;
+                let receiver_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckUser", (params.receiver.clone(),)).await;
                 match receiver_validation {
                     Err(_err) => {
                         SendDirectMessageResponse{
@@ -635,7 +635,7 @@ pub async fn send_direct_message(
 pub async fn get_friend_list(
     params: GetConnectedMemberParams
 ) -> GetConnectedMemberResponse {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
     match user_validation {
         Err(_err) => {
             GetConnectedMemberResponse{
@@ -670,7 +670,7 @@ pub async fn get_friend_list(
 pub async fn get_direct_messages(
     params: GetDirectMessageParams
 ) -> GetDirectMessageResponse{
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
     match user_validation {
         Err(_err) => {
             GetDirectMessageResponse{
@@ -688,7 +688,7 @@ pub async fn get_direct_messages(
                 }
             }
             else{
-                let receiver_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckUser", (params.receiver.clone(),)).await;
+                let receiver_validation = ic_cdk::call::<(String,), (bool,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckUser", (params.receiver.clone(),)).await;
                 match receiver_validation {
                     Err(_err) => {
                         GetDirectMessageResponse{
@@ -733,7 +733,7 @@ pub async fn get_direct_messages(
 }
 
 pub async fn view_message(params: ViewMessageParams) -> ViewMessageResponse {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
     match user_validation {
         Err(_err) => {
             ViewMessageResponse{
