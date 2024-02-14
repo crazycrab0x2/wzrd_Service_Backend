@@ -1,4 +1,4 @@
 target
 .dfx
-
+canister_ids.json
 .env
