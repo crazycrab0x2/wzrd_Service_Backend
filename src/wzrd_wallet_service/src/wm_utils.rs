@@ -78,7 +78,7 @@ pub struct SendResult {
 }
 
 pub async fn create_wallet(network: BitcoinNetwork, key_name: String, params: CreateWalletParams) -> CreateWalletResponse {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token,)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token,)).await;
     match user_validation {
         Err(_err) => {
             CreateWalletResponse {
@@ -157,7 +157,7 @@ pub async fn create_wallet(network: BitcoinNetwork, key_name: String, params: Cr
 }
 
 pub async fn import_wallet(network: BitcoinNetwork, key_name: String, params: ImportWalletParams) -> CreateWalletResponse {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token,)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token,)).await;
     match user_validation {
         Err(_err) => {
             CreateWalletResponse {
@@ -235,7 +235,7 @@ pub async fn import_wallet(network: BitcoinNetwork, key_name: String, params: Im
 }
 
 pub async fn destroy_wallet(params: CreateWalletParams) -> DestoryWalletResponse {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token,)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token,)).await;
     match user_validation {
         Err(_err) => {
             DestoryWalletResponse {
@@ -277,7 +277,7 @@ pub async fn destroy_wallet(params: CreateWalletParams) -> DestoryWalletResponse
 }
 
 pub async fn get_wallet_address(params: CreateWalletParams) -> CreateWalletResponse {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token,)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token,)).await;
     match user_validation {
         Err(_err) => {
             CreateWalletResponse {
@@ -331,7 +331,7 @@ pub async fn get_wallet_address(params: CreateWalletParams) -> CreateWalletRespo
 }
 
 pub async fn get_icp_balance(params: BalanceRequest) -> BalanceResult {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token,)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token,)).await;
     match user_validation {
         Err(_err) => {
             BalanceResult {
@@ -377,7 +377,7 @@ pub async fn get_icp_balance(params: BalanceRequest) -> BalanceResult {
 } 
 
 pub async fn send_icp(params: SendRequest) -> SendResult {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token,)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token,)).await;
     match user_validation {
         Err(_err) => {
             SendResult {
@@ -423,7 +423,7 @@ pub async fn send_icp(params: SendRequest) -> SendResult {
 }
 
 pub async fn get_btc_balance(network: BitcoinNetwork, params: BalanceRequest) -> BalanceResult {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token,)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token,)).await;
     match user_validation {
         Err(_err) => {
             BalanceResult {
@@ -469,7 +469,7 @@ pub async fn get_btc_balance(network: BitcoinNetwork, params: BalanceRequest) ->
 }
 
 pub async fn send_btc(network: BitcoinNetwork, key_name: String, params: SendRequest) -> SendResult {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("4dov3-miaaa-aaaap-qb7za-cai").unwrap(), "CheckToken", (params.token,)).await;
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token,)).await;
     match user_validation {
         Err(_err) => {
             SendResult {
