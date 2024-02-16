@@ -55,3 +55,8 @@ pub async fn get_direct_messages(params: chat_utils::GetDirectMessageParams) -> 
 pub async fn view_message(params: chat_utils::ViewMessageParams) -> chat_utils::ViewMessageResponse {
     chat_utils::view_message(params).await
 }
+
+#[update(name = "GetNewMessages")]
+pub async fn get_new_messages(params: chat_utils::GetNewMessagesParams) -> chat_utils::GetNewMessagesResponse {
+    chat_utils::get_new_messages(params).await
+}

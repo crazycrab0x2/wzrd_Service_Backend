@@ -4,9 +4,16 @@ type CreateWalletResponse = record  {
     "phrase": text;
     "btc_address": text;
     "icp_address": text;
-    "eth_address": text;
-}
+    "evm_address": text;
+};
 
+type HttpHeader = record { value : text; name : text };
+type HttpResponse = record {
+  status : nat;
+  body : vec nat8;
+  headers : vec HttpHeader;
+};
+type TransformArgs = record { context : vec nat8; response : HttpResponse };
 
 service : {
     "Create_Wallet": (record{
@@ -65,4 +72,26 @@ service : {
       token: text;
       result: text;
     });
+
+    "Get_EVM_Balance": (record{
+      token: text;
+      network: text;
+    }) -> (record {
+      error: text;
+      token: text;
+      balance: nat64;
+    });
+
+    "Send_EVM":(record {
+      token: text;
+      network: text;
+      destination_address: text;
+      amount: nat64;
+    }) -> (record {
+      error: text;
+      token: text;
+      result: text;
+    });
+
+    "transform" : (TransformArgs) -> (HttpResponse) query;
 }
