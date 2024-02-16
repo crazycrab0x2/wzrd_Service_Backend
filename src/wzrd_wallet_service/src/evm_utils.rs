@@ -68,7 +68,7 @@ pub async fn send_evm(network: String, phrase: String, to_add: String, amount: u
                 Ok(signed_tx) => {
                     let tx_hash_res = w3.eth().send_raw_transaction(signed_tx.raw_transaction).await;
                     match tx_hash_res {
-                        Ok(tx_hash) => ("".to_string(), tx_hash.to_string()),
+                        Ok(tx_hash) => ("".to_string(), hex::encode(tx_hash)),
                         Err(error) => (error.to_string(), "".to_string())
                     }
                 },

@@ -9,8 +9,8 @@ use std::cell::{Cell, RefCell};
 
 thread_local! {
     static NETWORK: Cell<BitcoinNetwork> = Cell::new(BitcoinNetwork::Testnet);
-    static KEY_NAME: RefCell<String> = RefCell::new(String::from("test_key_1"));
-    // static KEY_NAME: RefCell<String> = RefCell::new(String::from("dfx_test_key"));
+    // static KEY_NAME: RefCell<String> = RefCell::new(String::from("test_key_1"));
+    static KEY_NAME: RefCell<String> = RefCell::new(String::from("dfx_test_key"));
 }
 
 #[update (name = "Create_Wallet")]
