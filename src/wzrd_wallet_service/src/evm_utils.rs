@@ -63,7 +63,7 @@ pub async fn send_evm(network: String, phrase: String, to_add: String, amount: u
                 to: Some(to_addr),
                 nonce: Some(tx_count+1), 
                 value: U256::from(amount),
-                gas_price: Some(U256::from(gas_price)), // 100 wei
+                gas_price: Some(U256::from(gas_price)),
                 gas: U256::from(21000),
                 ..Default::default()
             };
@@ -88,9 +88,9 @@ pub async fn send_evm(network: String, phrase: String, to_add: String, amount: u
     
 fn get_network_info(network: &str) -> (String, u64, u64) {
     match network {
-      "ethereum" => ("https://ethereum-goerli.publicnode.com".to_string(), 5, 100),
-      "binance" => ("https://bsc-testnet.publicnode.com".to_string(), 97, 5000000000),
-      "polygon" => ("https://polygon-mumbai-pokt.nodies.app".to_string(), 80001, 1500000017),
+      "ethereum" => ("https://ethereum-goerli.publicnode.com".to_string(), 5, 16000000000),
+      "binance" => ("https://bsc-testnet.publicnode.com".to_string(), 97, 3000000000),
+      "polygon" => ("https://polygon-mumbai-pokt.nodies.app".to_string(), 80001, 38000000000),
       &_ => ("None".to_string(), 0, 0)
     }
 }
