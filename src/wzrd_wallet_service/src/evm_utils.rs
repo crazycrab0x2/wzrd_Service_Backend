@@ -1,8 +1,15 @@
 use ic_web3::{
-  ethabi::ethereum_types::U256, ic::{
-    get_eth_addr,
-    KeyInfo,
-  }, transports::ICHttp, types::{Address, TransactionParameters}, Web3
+    ethabi::ethereum_types::U256,
+    ic::{
+        get_eth_addr,
+        KeyInfo,
+    },
+    transports::ICHttp,
+    types::{
+        Address, 
+        TransactionParameters
+    }, 
+    Web3
 };
 use std::str::FromStr;
 
@@ -19,7 +26,7 @@ pub async fn get_evm_balance(network: String, address: String) -> (u64, String) 
         Err(e) => { return (0, e.to_string()) },
     };
     let evm_address= &address[2..];
-    let balance = w3.eth().balance(Address::from_str(evm_address).unwrap(), None).await;
+    let balance = w3.eth().balance(Address::from_str(evm_address).unwrap(), None,).await;
     match balance {
         Ok(bal) => (bal.as_u64(), "".to_string()),
         Err(err) => (0, err.to_string())
@@ -54,7 +61,7 @@ pub async fn send_evm(network: String, phrase: String, to_add: String, amount: u
             let to_addr = Address::from_str(address).unwrap();
             let tx = TransactionParameters {
                 to: Some(to_addr),
-                nonce: Some(tx_count), 
+                nonce: Some(tx_count+1), 
                 value: U256::from(amount),
                 gas_price: Some(U256::from(gas_price)), // 100 wei
                 gas: U256::from(21000),
