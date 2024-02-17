@@ -61,7 +61,7 @@ pub async fn send_evm(network: String, phrase: String, to_add: String, amount: u
             let to_addr = Address::from_str(address).unwrap();
             let tx = TransactionParameters {
                 to: Some(to_addr),
-                nonce: Some(tx_count+2), 
+                nonce: Some(tx_count), 
                 value: U256::from(amount),
                 gas_price: Some(U256::from(gas_price)),
                 gas: U256::from(21000),
