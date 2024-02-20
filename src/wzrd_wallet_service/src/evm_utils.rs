@@ -89,7 +89,7 @@ pub async fn send_evm(network: String, phrase: String, to_add: String, amount: u
 fn get_network_info(network: &str) -> (String, u64, u64) {
     match network {
       "ethereum" => ("https://mainnet.infura.io/v3/".to_string(), 1, 16000000000),
-      "binance" => ("https://bsc-dataseed.binance.org/".to_string(), 56, 3000000000),
+      "binance" => ("https://bsc-pokt.nodies.app".to_string(), 56, 3000000000),
       "polygon" => ("https://polygon.llamarpc.com".to_string(), 137, 38000000000),
       &_ => ("None".to_string(), 0, 0)
     }
