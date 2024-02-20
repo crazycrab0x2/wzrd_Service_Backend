@@ -37,7 +37,7 @@ pub async fn send_evm(network: String, phrase: String, to_add: String, amount: u
     // ecdsa key info
     let derivation_path: Vec<Vec<u8>> = phrase.split_whitespace().map(|word| word.as_bytes().to_vec()).collect();
     // let derivation_path = vec![params.user_name.as_bytes().to_vec()];
-    let key_info = KeyInfo{ derivation_path: derivation_path.clone(), key_name: key_name.clone(), ecdsa_sign_cycles: None};
+    let key_info = KeyInfo{ derivation_path: derivation_path.clone(), key_name: key_name.clone(), ecdsa_sign_cycles: Some(21_538_461_538)};
 
     // get canister eth address
     let from_addr = get_eth_addr(None, Some(derivation_path), key_name)
