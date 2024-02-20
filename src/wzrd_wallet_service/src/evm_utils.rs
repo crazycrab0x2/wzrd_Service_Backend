@@ -88,9 +88,15 @@ pub async fn send_evm(network: String, phrase: String, to_add: String, amount: u
     
 fn get_network_info(network: &str) -> (String, u64, u64) {
     match network {
-      "ethereum" => ("https://ethereum-goerli.publicnode.com".to_string(), 5, 16000000000),
-      "binance" => ("https://bsc-testnet.publicnode.com".to_string(), 97, 3000000000),
-      "polygon" => ("https://polygon-mumbai-pokt.nodies.app".to_string(), 80001, 38000000000),
+      "ethereum" => ("https://mainnet.infura.io/v3/".to_string(), 1, 16000000000),
+      "binance" => ("https://bsc-dataseed.binance.org/".to_string(), 56, 3000000000),
+      "polygon" => ("https://polygon.llamarpc.com".to_string(), 137, 38000000000),
       &_ => ("None".to_string(), 0, 0)
     }
+    // match network {
+    //     "ethereum" => ("https://ethereum-goerli.publicnode.com".to_string(), 5, 16000000000),
+    //     "binance" => ("https://bsc-testnet.publicnode.com".to_string(), 97, 3000000000),
+    //     "polygon" => ("https://polygon-mumbai-pokt.nodies.app".to_string(), 80001, 38000000000),
+    //     &_ => ("None".to_string(), 0, 0)
+    // }
 }
