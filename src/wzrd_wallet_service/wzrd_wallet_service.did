@@ -82,6 +82,15 @@ service : {
       balance: nat64;
     });
 
+    "Get_USDT_Balance": (record{
+      token: text;
+      network: text;
+    }) -> (record {
+      error: text;
+      token: text;
+      balance: nat64;
+    });
+
     "Send_EVM":(record {
       token: text;
       network: text;

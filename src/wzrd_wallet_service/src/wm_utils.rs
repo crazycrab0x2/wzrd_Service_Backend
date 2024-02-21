@@ -483,6 +483,52 @@ pub async fn get_evm_balance(params: EVMBalanceRequest) -> BalanceResult {
     }
 } 
 
+pub async fn get_usdt_balance(params: EVMBalanceRequest) -> BalanceResult {
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token,)).await;
+    match user_validation {
+        Err(_err) => {
+            BalanceResult {
+                error: "Can't access ID service".to_string(),
+                token: "".to_string(),
+                balance: 0
+            }
+        }
+        Ok((token,)) => {
+            if token == "".to_string() {
+                BalanceResult {
+                    error: "Invalid token".to_string(),
+                    token,
+                    balance: 0
+                }
+            }
+            else{
+                let user_name = get_user_name(token.clone());
+                let mut address = "".to_string();
+                WALLET_STORE.with(|wallet_store|{
+                    if wallet_store.borrow().get(&user_name).is_some() {
+                        address = wallet_store.borrow().get(&user_name).unwrap().clone().evm_address;
+                    }
+                });
+                if address == "".to_string() {
+                    BalanceResult {
+                        error: "No wallet exist".to_string(),
+                        token,
+                        balance: 0
+                    }
+                }
+                else {
+                    let (balance, error) = evm_utils::get_usdt_balance(params.network, address).await;
+                    BalanceResult {
+                        error,
+                        token,
+                        balance
+                    }
+                }
+            }
+        }
+    }
+}
+
 pub async fn send_evm(params: EVMSendRequest, key_name: String) -> SendResult {
     let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token,)).await;
     match user_validation {
