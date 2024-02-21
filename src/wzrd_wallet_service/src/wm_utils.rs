@@ -483,6 +483,52 @@ pub async fn get_evm_balance(params: EVMBalanceRequest) -> BalanceResult {
     }
 } 
 
+pub async fn send_evm(params: EVMSendRequest, key_name: String) -> SendResult {
+    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token,)).await;
+    match user_validation {
+        Err(_err) => {
+            SendResult {
+                error: "Can't access ID service".to_string(),
+                token: "".to_string(),
+                result: "".to_string()
+            }
+        }
+        Ok((token,)) => {
+            if token == "".to_string() {
+                SendResult {
+                    error: "Invalid token".to_string(),
+                    token,
+                    result: "".to_string()
+                }
+            }
+            else{
+                let user_name = get_user_name(token.clone());
+                let mut phrase = "".to_string();
+                WALLET_STORE.with(|wallet_store|{
+                    if wallet_store.borrow().get(&user_name).is_some() {
+                        phrase = wallet_store.borrow().get(&user_name).unwrap().clone().phrase;
+                    }
+                });
+                if phrase == "".to_string() {
+                    SendResult {
+                        error: "No wallet exist".to_string(),
+                        token,
+                        result: "".to_string()
+                    }
+                }
+                else {
+                    let (error, result) = evm_utils::send_evm(params.network, phrase, params.destination_address, params.amount, key_name).await;
+                    SendResult {
+                        error,
+                        token,
+                        result
+                    }
+                }
+            }
+        }
+    }
+}
+
 pub async fn get_usdt_balance(params: EVMBalanceRequest) -> BalanceResult {
     let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token,)).await;
     match user_validation {
@@ -529,7 +575,7 @@ pub async fn get_usdt_balance(params: EVMBalanceRequest) -> BalanceResult {
     }
 }
 
-pub async fn send_evm(params: EVMSendRequest, key_name: String) -> SendResult {
+pub async fn send_usdt(params: EVMSendRequest, key_name: String) -> SendResult {
     let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token,)).await;
     match user_validation {
         Err(_err) => {
@@ -557,13 +603,13 @@ pub async fn send_evm(params: EVMSendRequest, key_name: String) -> SendResult {
                 });
                 if phrase == "".to_string() {
                     SendResult {
-                        error: "No wallet exist".to_string(),
+                           error: "No wallet exist".to_string(),
                         token,
                         result: "".to_string()
                     }
                 }
                 else {
-                    let (error, result) = evm_utils::send_evm(params.network, phrase, params.destination_address, params.amount, key_name).await;
+                    let (result, error) = evm_utils::send_usdt(phrase, params.network, params.amount, params.destination_address, key_name).await;
                     SendResult {
                         error,
                         token,

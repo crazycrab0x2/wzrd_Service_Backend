@@ -66,15 +66,21 @@ pub async fn get_evm_balance(request: wm_utils::EVMBalanceRequest) -> wm_utils::
     wm_utils::get_evm_balance(request).await
 }
 
+#[update (name = "Send_EVM")]
+pub async fn send_evm(request: wm_utils::EVMSendRequest) -> wm_utils::SendResult {
+    let key_name = KEY_NAME.with(|kn| kn.borrow().to_string());
+    wm_utils::send_evm(request, key_name).await
+}
+
 #[update (name = "Get_USDT_Balance")]
 pub async fn get_usdt_balance(request: wm_utils::EVMBalanceRequest) -> wm_utils::BalanceResult {
     wm_utils::get_usdt_balance(request).await
 }
 
-#[update (name = "Send_EVM")]
-pub async fn send_evm(request: wm_utils::EVMSendRequest) -> wm_utils::SendResult {
+#[update (name = "Send_USDT")]
+pub async fn send_usdt(request: wm_utils::EVMSendRequest) -> wm_utils::SendResult {
     let key_name = KEY_NAME.with(|kn| kn.borrow().to_string());
-    wm_utils::send_evm(request, key_name).await
+    wm_utils::send_usdt(request, key_name).await
 }
 
 #[query(name = "transform")]

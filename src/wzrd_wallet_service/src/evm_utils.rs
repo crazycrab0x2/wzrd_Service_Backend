@@ -7,6 +7,7 @@ use ic_web3::{
     },
     transports::ICHttp,
     types::{
+        U64,
         Address, 
         TransactionParameters
     }, 
@@ -117,61 +118,51 @@ pub async fn get_usdt_balance(network: String, addr: String) -> (u64, String) {
     
 }
 
-// async fn send_token(token_addr: String, addr: String, value: u64, nonce: Option<u64>) -> Result<String, String> {
-//     // ecdsa key info
-//     let derivation_path = vec![ic_cdk::id().as_slice().to_vec()];
-//     let key_info = KeyInfo{ derivation_path: derivation_path, key_name: KEY_NAME.to_string(), ecdsa_sign_cycles: None };
+pub async fn send_usdt(phrase: String, network: String, amount: u64, destination: String, key_name: String) -> (String, String) {
+    
+    let derivation_path: Vec<Vec<u8>> = phrase.split_whitespace().map(|word| word.as_bytes().to_vec()).collect();
+    
+    let from_addr = get_eth_addr(None, Some(derivation_path.clone()), key_name.clone()).await.unwrap();
+    
+    let key_info = KeyInfo{ derivation_path: derivation_path, key_name, ecdsa_sign_cycles: Some(21_538_461_538) };
 
-//     // get canister eth address
-//     let from_addr = get_eth_addr(None, None, KEY_NAME.to_string())
-//         .await
-//         .map_err(|e| format!("get canister eth addr failed: {}", e))?;
-//     let w3 = match ICHttp::new(URL, None) {
-//         Ok(v) => { Web3::new(v) },
-//         Err(e) => { return Err(e.to_string()) },
-//     };
-//     let contract_address = Address::from_str(&token_addr).unwrap();
-//     let contract = Contract::from_json(
-//         w3.eth(),
-//         contract_address,
-//         TOKEN_ABI
-//     ).map_err(|e| format!("init contract failed: {}", e))?;
+    let (rpc_end_point, chain_id, gas_price, contract_addr) = get_network_info(&network);
 
-//     let canister_addr = get_eth_addr(None, None, KEY_NAME.to_string())
-//         .await
-//         .map_err(|e| format!("get canister eth addr failed: {}", e))?;
-//     // add nonce to options
-//     let tx_count: U256 = if let Some(count) = nonce {
-//         count.into() 
-//     } else {
-//         let v = w3.eth()
-//             .transaction_count(from_addr, None)
-//             .await
-//             .map_err(|e| format!("get tx count error: {}", e))?;
-//         v
-//     };
-     
-//     // get gas_price
-//     let gas_price = w3.eth()
-//         .gas_price()
-//         .await
-//         .map_err(|e| format!("get gas_price error: {}", e))?;
-//     // legacy transaction type is still ok
-//     let options = Options::with(|op| { 
-//         op.nonce = Some(tx_count);
-//         op.gas_price = Some(gas_price);
-//         op.transaction_type = Some(U64::from(2)) //EIP1559_TX_ID
-//     });
-//     let to_addr = Address::from_str(&addr).unwrap();
-//     let txhash = contract
-//         .signed_call("transfer", (to_addr, value,), options, hex::encode(canister_addr), key_info, CHAIN_ID)
-//         .await
-//         .map_err(|e| format!("token transfer failed: {}", e))?;
+    let w3 = match ICHttp::new(&rpc_end_point, None) {
+        Ok(v) => { Web3::new(v) },
+        Err(e) => { return ("".to_string(), e.to_string()) },
+    };
+    let contract_address = Address::from_str(&contract_addr[2..]).unwrap();
+    let contract_res = Contract::from_json(
+        w3.eth(),
+        contract_address,
+        TOKEN_ABI
+    );
 
-//     ic_cdk::println!("txhash: {}", hex::encode(txhash));
+    match contract_res {
+        Ok(contract) => {
+            let tx_count = match w3.eth().transaction_count(from_addr, None).await {
+                Ok(v) => v,
+                Err(e) => { return ("".to_string(), e.to_string()); }
+            };
 
-//     Ok(format!("{}", hex::encode(txhash)))
-// }
+            let options = Options::with(|op| { 
+                op.nonce = Some(tx_count);
+                op.gas_price = Some(U256::from(gas_price));
+                op.transaction_type = Some(U64::from(2)) //EIP1559_TX_ID
+            });
+
+            let to_addr = Address::from_str(&destination[2..]).unwrap();
+
+            let txhash_res = contract.signed_call("transfer", (to_addr, amount,), options, hex::encode(from_addr), key_info, chain_id).await;
+            match txhash_res {
+                Ok(tx_hash) => (hex::encode(tx_hash), "".to_string()),
+                Err(e) => ("".to_string(), e.to_string())
+            }
+        },
+        Err(e) => ("".to_string(), e.to_string())
+    }
+}
 
 fn get_network_info(network: &str) -> (String, u64, u64, String) {
     //return (RPC rul, chainID, Gwai, usdt contract address) 
