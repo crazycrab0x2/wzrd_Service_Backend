@@ -1,4 +1,5 @@
 use ic_web3::{
+    contract::{Contract, Options, Error},
     ethabi::ethereum_types::U256,
     ic::{
         get_eth_addr,
@@ -13,6 +14,8 @@ use ic_web3::{
 };
 use std::str::FromStr;
 
+const TOKEN_ABI: &[u8] = include_bytes!("./token.json");
+
 pub async fn get_evm_address(phrase: String, key_name: String) -> String {
     let derivation: Vec<Vec<u8>> = phrase.split_whitespace().map(|word| word.as_bytes().to_vec()).collect();
     let res = get_eth_addr(None, Some(derivation), key_name.to_string()).await;
@@ -20,7 +23,7 @@ pub async fn get_evm_address(phrase: String, key_name: String) -> String {
 }
 
 pub async fn get_evm_balance(network: String, address: String) -> (u64, String) {
-    let (rpc_end_point, _, _) = get_network_info(network.as_str());
+    let (rpc_end_point, _, _, _) = get_network_info(network.as_str());
     let w3 = match ICHttp::new(&rpc_end_point, None) {
         Ok(v) => { Web3::new(v) },
         Err(e) => { return (0, e.to_string()) },
@@ -44,7 +47,7 @@ pub async fn send_evm(network: String, phrase: String, to_add: String, amount: u
         .await
         .unwrap();
     // get canister the address tx count
-    let (rpc_end_point, chain_id, gas_price) = get_network_info(network.as_str());
+    let (rpc_end_point, chain_id, gas_price, _) = get_network_info(network.as_str());
 
     let w3 = match ICHttp::new(&rpc_end_point, None) {
         Ok(v) => { Web3::new(v) },
@@ -86,12 +89,97 @@ pub async fn send_evm(network: String, phrase: String, to_add: String, amount: u
     }
 }
     
-fn get_network_info(network: &str) -> (String, u64, u64) {
+pub async fn get_usdt_balance(network: String, addr: String) -> (u64, String) {
+    let (rpc, _, _, contract_addr) = get_network_info(&network);
+    let w3 = match ICHttp::new(&rpc, None) {
+        Ok(v) => { Web3::new(v) },
+        Err(e) => { return (0u64, e.to_string());}
+    };
+    let contract_address = Address::from_str(&contract_addr[2..]).unwrap();
+    let contract_res = Contract::from_json(
+        w3.eth(),
+        contract_address,
+        TOKEN_ABI
+    );
+    match contract_res {
+        Ok(contract) => {
+            let addr = Address::from_str(&addr[2..]).unwrap();
+            let balance_res: Result<U256, Error> = contract.query("balanceOf", (addr,), None, Options::default(), None).await;
+            match balance_res {
+                Ok(balance) => {
+                    (balance.as_u64(), "".to_string())
+                }
+                Err(err) => (0u64, err.to_string())
+            }
+        }
+        Err(error) => (0u64, error.to_string())
+    }
+    
+}
+
+// async fn send_token(token_addr: String, addr: String, value: u64, nonce: Option<u64>) -> Result<String, String> {
+//     // ecdsa key info
+//     let derivation_path = vec![ic_cdk::id().as_slice().to_vec()];
+//     let key_info = KeyInfo{ derivation_path: derivation_path, key_name: KEY_NAME.to_string(), ecdsa_sign_cycles: None };
+
+//     // get canister eth address
+//     let from_addr = get_eth_addr(None, None, KEY_NAME.to_string())
+//         .await
+//         .map_err(|e| format!("get canister eth addr failed: {}", e))?;
+//     let w3 = match ICHttp::new(URL, None) {
+//         Ok(v) => { Web3::new(v) },
+//         Err(e) => { return Err(e.to_string()) },
+//     };
+//     let contract_address = Address::from_str(&token_addr).unwrap();
+//     let contract = Contract::from_json(
+//         w3.eth(),
+//         contract_address,
+//         TOKEN_ABI
+//     ).map_err(|e| format!("init contract failed: {}", e))?;
+
+//     let canister_addr = get_eth_addr(None, None, KEY_NAME.to_string())
+//         .await
+//         .map_err(|e| format!("get canister eth addr failed: {}", e))?;
+//     // add nonce to options
+//     let tx_count: U256 = if let Some(count) = nonce {
+//         count.into() 
+//     } else {
+//         let v = w3.eth()
+//             .transaction_count(from_addr, None)
+//             .await
+//             .map_err(|e| format!("get tx count error: {}", e))?;
+//         v
+//     };
+     
+//     // get gas_price
+//     let gas_price = w3.eth()
+//         .gas_price()
+//         .await
+//         .map_err(|e| format!("get gas_price error: {}", e))?;
+//     // legacy transaction type is still ok
+//     let options = Options::with(|op| { 
+//         op.nonce = Some(tx_count);
+//         op.gas_price = Some(gas_price);
+//         op.transaction_type = Some(U64::from(2)) //EIP1559_TX_ID
+//     });
+//     let to_addr = Address::from_str(&addr).unwrap();
+//     let txhash = contract
+//         .signed_call("transfer", (to_addr, value,), options, hex::encode(canister_addr), key_info, CHAIN_ID)
+//         .await
+//         .map_err(|e| format!("token transfer failed: {}", e))?;
+
+//     ic_cdk::println!("txhash: {}", hex::encode(txhash));
+
+//     Ok(format!("{}", hex::encode(txhash)))
+// }
+
+fn get_network_info(network: &str) -> (String, u64, u64, String) {
+    //return (RPC rul, chainID, Gwai, usdt contract address) 
     match network {
-      "ethereum" => ("https://mainnet.infura.io/v3/".to_string(), 1, 16000000000),
-      "binance" => ("https://bsc-pokt.nodies.app".to_string(), 56, 3000000000),
-      "polygon" => ("https://polygon.llamarpc.com".to_string(), 137, 38000000000),
-      &_ => ("None".to_string(), 0, 0)
+      "ethereum" => ("https://mainnet.infura.io/v3/".to_string(), 1, 16000000000, "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string()),
+      "binance" => ("https://bsc-pokt.nodies.app".to_string(), 56, 3000000000, "0x55d398326f99059fF775485246999027B3197955".to_string()),
+      "polygon" => ("https://polygon.llamarpc.com".to_string(), 137, 38000000000, "0xc2132D05D31c914a87C6611C10748AEb04B58e8F".to_string()),
+      &_ => ("".to_string(), 0, 0, "".to_string())
     }
     // match network {
     //     "ethereum" => ("https://ethereum-goerli.publicnode.com".to_string(), 5, 16000000000),

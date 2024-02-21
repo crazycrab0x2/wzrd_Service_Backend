@@ -61,10 +61,14 @@ pub async fn send_icp(request: wm_utils::SendRequest) -> wm_utils::SendResult {
     wm_utils::send_icp(request).await
 }
 
-
 #[update (name = "Get_EVM_Balance")]
 pub async fn get_evm_balance(request: wm_utils::EVMBalanceRequest) -> wm_utils::BalanceResult {
     wm_utils::get_evm_balance(request).await
+}
+
+#[update (name = "Get_USDT_Balance")]
+pub async fn get_usdt_balance(request: wm_utils::EVMBalanceRequest) -> wm_utils::BalanceResult {
+    wm_utils::get_usdt_balance(request).await
 }
 
 #[update (name = "Send_EVM")]
