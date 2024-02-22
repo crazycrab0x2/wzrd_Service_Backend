@@ -45,15 +45,15 @@ type GetDirectMessageParam = record {
     "receiver": text;
 };
 service : {
-    "1.CreateGroup": (params: CreateGroupParams) -> (record{token: text; result: bool; error: text;});
-    "2.JoinGroup": (params: JoinGroupParam) -> (record{token: text; result: bool; error: text;});
-    "3.LeaveGroup": (params: LeaveGroupParams) -> (record{token: text; result: bool; error: text;});
-    "4.GetJoinedGroup": (record{ token: text }) -> (record{ token: text; result: vec text; error: text;});
-    "5.GetGroupMembers": (record{ token: text; group_id: text;}) -> (record{ token: text; result: vec text; error: text;});
-    "6.SendGroupMessage": (params: SendGroupMessageParam) -> (record{ token: text; result: bool; error: text;});
-    "7.GetGoupMessage": (record{ token: text; group_id: text;})-> (record{ token: text; result: vec GroupMessage; error: text;});
-    "8.GetConnectedMembers": (record{ token: text; }) -> (record{ token: text; result: vec text; error: text;});
-    "9.SendDirectMessage": (params: SendDirectMessageParam) -> (record{ token: text; result: bool; error: text;});
-    "10.GetDirectMessages": (params: GetDirectMessageParam) -> (record{ token: text; result: vec DirectMessage; error: text;});
-    "11.ViewMessage": (record{ token: text; msg_id: text;}) -> (record{ token: text; result: bool;});
+    "a.CreateGroup": (params: CreateGroupParams) -> (record{token: text; result: bool; error: text;});
+    "b.JoinGroup": (params: JoinGroupParam) -> (record{token: text; result: bool; error: text;});
+    "c.LeaveGroup": (params: LeaveGroupParams) -> (record{token: text; result: bool; error: text;});
+    "d.GetJoinedGroup": (record{ token: text }) -> (record{ token: text; result: vec text; error: text;});
+    "e.GetGroupMembers": (record{ token: text; group_id: text;}) -> (record{ token: text; result: vec text; error: text;});
+    "f.SendGroupMessage": (params: SendGroupMessageParam) -> (record{ token: text; result: bool; error: text;});
+    "g.GetGoupMessage": (record{ token: text; group_id: text;})-> (record{ token: text; result: vec GroupMessage; error: text;});
+    "h.GetConnectedMembers": (record{ token: text; }) -> (record{ token: text; result: vec text; error: text;});
+    "i.SendDirectMessage": (params: SendDirectMessageParam) -> (record{ token: text; result: bool; error: text;});
+    "j.GetDirectMessages": (params: GetDirectMessageParam) -> (record{ token: text; result: vec DirectMessage; error: text;});
+    "k.ViewMessage": (record{ token: text; msg_id: text;}) -> (record{ token: text; result: bool;});
 }
