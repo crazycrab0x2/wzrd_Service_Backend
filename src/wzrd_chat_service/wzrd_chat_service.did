@@ -55,6 +55,5 @@ service : {
     "SendDirectMessage": (params: SendDirectMessageParam) -> (record{ token: text; result: bool; error: text;});
     "GetConnectedMembers": (record{ token: text; }) -> (record{ token: text; result: vec text; error: text;});
     "GetDirectMessages": (params: GetDirectMessageParam) -> (record{ token: text; result: vec DirectMessage; error: text;}) query;
-    "GetNewMessages": (record{ token: text }) -> (record{ token: text; error: text; result: vec DirectMessage; }) query;
     "ViewMessage": (record{ token: text; msg_id: text;}) -> (record{ token: text; result: bool;});
 }
