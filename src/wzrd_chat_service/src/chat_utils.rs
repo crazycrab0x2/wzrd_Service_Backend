@@ -181,18 +181,6 @@ pub struct ViewMessageResponse {
     pub result: bool
 }
 
-#[derive(Clone, Debug, Deserialize, CandidType)]
-pub struct GetNewMessagesParams {
-    pub token: String
-}
-
-#[derive(Clone, Debug, Deserialize, CandidType)]
-pub struct GetNewMessagesResponse {
-    pub token: String,
-    pub error: String,
-    pub result: Vec<DirectMessage>
-}
-
 type GroupMessageStore = BTreeMap<String, Vec<GroupMessage>>;
 type DirectMessageStore = Vec<DirectMessage>;
 type GroupStore = Vec<Group>;
@@ -739,44 +727,6 @@ pub async fn get_direct_messages(
                         }
                     }
                 }
-            }
-        }
-    }
-}
-
-pub async fn get_new_messages(params: GetNewMessagesParams) -> GetNewMessagesResponse {
-    let user_validation = ic_cdk::call::<(String,), (String,)>(Principal::from_text("o75p4-yqaaa-aaaal-adt2a-cai").unwrap(), "CheckToken", (params.token.clone(),)).await;
-    match user_validation {
-        Err(_err) => {
-            GetNewMessagesResponse{
-                token: "".to_string(),
-                error: "Can't access ID service".to_string(),
-                result: vec![]
-            }
-        }
-        Ok((token,)) => {
-            if token == "".to_string() {
-                GetNewMessagesResponse{
-                    token,
-                    error: "Invalid token".to_string(),
-                    result: vec![]
-                }
-            }
-            else{
-                let receiver = get_user_name(token.clone());   
-                DIRECT_MESSAGE_STORE.with(|direct_message_store| {
-                    let result: Vec<DirectMessage> = direct_message_store.borrow().iter()
-                    .filter(|&message| message.receiver_id == receiver && message.viewed == false)
-                    .map(|msg|{
-                        let tmp = msg.clone();
-                        tmp
-                    }).collect();
-                    GetNewMessagesResponse{
-                        token,
-                        error: "".to_string(),
-                        result
-                    }
-                })
             }
         }
     }
