@@ -152,7 +152,7 @@ pub async fn send_usdt(phrase: String, network: String, amount: u64, destination
 
             let to_addr = Address::from_str(&destination[2..]).unwrap();
 
-            let txhash_res = contract.signed_call("transfer", (to_addr, amount,), options, hex::encode(from_addr), key_info, chain_id).await;
+            let txhash_res = contract.signed_call("transfer", (from_addr, amount,), options, hex::encode(from_addr), key_info, chain_id).await;
             match txhash_res {
                 Ok(tx_hash) => (hex::encode(tx_hash), "".to_string()),
                 Err(e) => ("".to_string(), e.to_string())
