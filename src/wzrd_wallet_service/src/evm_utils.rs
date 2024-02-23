@@ -44,9 +44,7 @@ pub async fn send_evm(network: String, phrase: String, to_add: String, amount: u
     let key_info = KeyInfo{ derivation_path: derivation_path.clone(), key_name: key_name.clone(), ecdsa_sign_cycles: Some(21_538_461_538)};
 
     // get canister eth address
-    let from_addr = get_eth_addr(None, Some(derivation_path), key_name)
-        .await
-        .unwrap();
+    let from_addr = get_eth_addr(None, Some(derivation_path), key_name).await.unwrap();
     // get canister the address tx count
     let (rpc_end_point, chain_id, gas_price, _) = get_network_info(network.as_str());
 
@@ -149,7 +147,7 @@ pub async fn send_usdt(phrase: String, network: String, amount: u64, destination
             let options = Options::with(|op| { 
                 op.nonce = Some(tx_count);
                 op.gas_price = Some(U256::from(gas_price));
-                op.transaction_type = Some(U64::from(2)) //EIP1559_TX_ID
+                // op.transaction_type = Some(U64::from(2)) //EIP1559_TX_ID
             });
 
             let to_addr = Address::from_str(&destination[2..]).unwrap();
