@@ -76,7 +76,7 @@ pub async fn send_evm(network: String, phrase: String, to_add: String, amount: u
                     match tx_hash_res {
                         Ok(tx_hash) => ("".to_string(), hex::encode(tx_hash)),
                         Err(error) => { 
-                            if error.to_string() == "RPC error: Error { code: ServerError(-32000), message: 'already known', data: None }".to_string() {
+                            if error.to_string().contains("already known") {
                                 ("Success".to_string(), "".to_string())
                             }
                             else{
@@ -162,7 +162,7 @@ pub async fn send_usdt(phrase: String, network: String, amount: u64, destination
             match txhash_res {
                 Ok(tx_hash) => (hex::encode(tx_hash), "".to_string()),
                 Err(error) => {
-                    if error.to_string() == "RPC error: Error { code: ServerError(-32000), message: 'already known', data: None }".to_string() {
+                    if error.to_string().contains("already known") {
                         ("Success".to_string(), "".to_string())
                     }
                     else{
