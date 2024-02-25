@@ -32,7 +32,10 @@ pub async fn send_icp(phrase: String, des_address: String, amount: u64) -> (Stri
   hasher.update(phrase);
   let result = hasher.finalize();
   let sender_id: Option<Subaccount> = Some(Subaccount(result.into()));
-
+  let to_addr = match AccountIdentifier::from_hex(des_address.as_str()) {
+    Ok(add) => add,
+    Err(err) => {return (err.to_string(), "".to_string());}
+  };
   let block_index = transfer(
       MAINNET_LEDGER_CANISTER_ID,
       TransferArgs {
@@ -40,7 +43,7 @@ pub async fn send_icp(phrase: String, des_address: String, amount: u64) -> (Stri
         amount: Tokens::from_e8s(amount),
         fee: DEFAULT_FEE,
         from_subaccount: sender_id,
-        to: AccountIdentifier::from_hex(des_address.as_str()).unwrap(),
+        to: to_addr,
         created_at_time: None,
       }
     ).await;

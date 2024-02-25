@@ -118,7 +118,10 @@ pub async fn send_btc(
         .utxos;
 
     let own_address = Address::from_str(&own_address).unwrap();
-    let dst_address = Address::from_str(&dst_address).unwrap();
+    let dst_address = match Address::from_str(&dst_address) {
+        Ok(add) => add,
+        Err(err) => {return (err.to_string(), "".to_string());}
+    };
 
     // Build the transaction that sends `amount` to the destination address.
     let transaction = build_transaction(

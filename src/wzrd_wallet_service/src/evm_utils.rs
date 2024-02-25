@@ -1,16 +1,11 @@
 use ic_web3::{
-    contract::{Contract, Options, Error},
-    ethabi::ethereum_types::U256,
-    ic::{
+    contract::{Contract, Error, Options}, ethabi::ethereum_types::U256, ic::{
         get_eth_addr,
         KeyInfo,
-    },
-    transports::ICHttp,
-    types::{
+    }, transports::ICHttp, types::{
         Address, 
         TransactionParameters
-    }, 
-    Web3
+    }, Web3
 };
 use std::str::FromStr;
 
@@ -59,7 +54,10 @@ pub async fn send_evm(network: String, phrase: String, to_add: String, amount: u
         Ok(tx_count) => {
             // construct a transaction
             let address= &to_add[2..];
-            let to_addr = Address::from_str(address).unwrap();
+            let to_addr = match Address::from_str(address) {
+                Ok(add) => add,
+                Err(err) => {return (err.to_string(), "".to_string());}
+            };
             let tx = TransactionParameters {
                 to: Some(to_addr),
                 nonce: Some(tx_count), 
@@ -77,7 +75,14 @@ pub async fn send_evm(network: String, phrase: String, to_add: String, amount: u
                     let tx_hash_res = w3.eth().send_raw_transaction(signed_tx.raw_transaction).await;
                     match tx_hash_res {
                         Ok(tx_hash) => ("".to_string(), hex::encode(tx_hash)),
-                        Err(error) => (error.to_string(), "".to_string())
+                        Err(error) => { 
+                            if error.to_string() == "RPC error: Error { code: ServerError(-32000), message: 'already known', data: None }".to_string() {
+                                ("Success".to_string(), "".to_string())
+                            }
+                            else{
+                                (error.to_string(), "".to_string())
+                            }
+                        }
                     }
                 },
                 Err(error) => (error.to_string(), "".to_string())
@@ -146,15 +151,24 @@ pub async fn send_usdt(phrase: String, network: String, amount: u64, destination
             let options = Options::with(|op| { 
                 op.nonce = Some(tx_count);
                 op.gas_price = Some(U256::from(gas_price));
-                // op.transaction_type = Some(U64::from(2)) //EIP1559_TX_ID
             });
 
-            let to_addr = Address::from_str(&destination[2..]).unwrap();
+            let to_addr = match Address::from_str(&destination[2..]) {
+                Ok(add) => add,
+                Err(err) => {return ("".to_string(), err.to_string());}
+            };
 
             let txhash_res = contract.signed_call("transfer", (to_addr, amount,), options, hex::encode(from_addr.clone()), key_info, chain_id).await;
             match txhash_res {
                 Ok(tx_hash) => (hex::encode(tx_hash), "".to_string()),
-                Err(e) => ("".to_string(), e.to_string())
+                Err(error) => {
+                    if error.to_string() == "RPC error: Error { code: ServerError(-32000), message: 'already known', data: None }".to_string() {
+                        ("Success".to_string(), "".to_string())
+                    }
+                    else{
+                        (error.to_string(), "".to_string())
+                    }
+                }
             }
         },
         Err(e) => ("".to_string(), e.to_string())
